@@ -1,0 +1,462 @@
+
+R version 4.5.1 (2025-06-13 ucrt) -- "Great Square Root"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: x86_64-w64-mingw32/x64
+
+R es un software libre y viene sin GARANTIA ALGUNA.
+Usted puede redistribuirlo bajo ciertas circunstancias.
+Escriba 'license()' o 'licence()' para detalles de distribucion.
+
+R es un proyecto colaborativo con muchos contribuyentes.
+Escriba 'contributors()' para obtener más información y
+'citation()' para saber cómo citar R o paquetes de R en publicaciones.
+
+Escriba 'demo()' para demostraciones, 'help()' para el sistema on-line de ayuda,
+o 'help.start()' para abrir el sistema de ayuda HTML con su navegador.
+Escriba 'q()' para salir de R.
+
+> installed.packages()
+             Package        LibPath                             
+base         "base"         "C:/Program Files/R/R-4.5.1/library"
+boot         "boot"         "C:/Program Files/R/R-4.5.1/library"
+class        "class"        "C:/Program Files/R/R-4.5.1/library"
+cluster      "cluster"      "C:/Program Files/R/R-4.5.1/library"
+codetools    "codetools"    "C:/Program Files/R/R-4.5.1/library"
+compiler     "compiler"     "C:/Program Files/R/R-4.5.1/library"
+datasets     "datasets"     "C:/Program Files/R/R-4.5.1/library"
+foreign      "foreign"      "C:/Program Files/R/R-4.5.1/library"
+graphics     "graphics"     "C:/Program Files/R/R-4.5.1/library"
+grDevices    "grDevices"    "C:/Program Files/R/R-4.5.1/library"
+grid         "grid"         "C:/Program Files/R/R-4.5.1/library"
+KernSmooth   "KernSmooth"   "C:/Program Files/R/R-4.5.1/library"
+lattice      "lattice"      "C:/Program Files/R/R-4.5.1/library"
+MASS         "MASS"         "C:/Program Files/R/R-4.5.1/library"
+Matrix       "Matrix"       "C:/Program Files/R/R-4.5.1/library"
+methods      "methods"      "C:/Program Files/R/R-4.5.1/library"
+mgcv         "mgcv"         "C:/Program Files/R/R-4.5.1/library"
+nlme         "nlme"         "C:/Program Files/R/R-4.5.1/library"
+nnet         "nnet"         "C:/Program Files/R/R-4.5.1/library"
+parallel     "parallel"     "C:/Program Files/R/R-4.5.1/library"
+rpart        "rpart"        "C:/Program Files/R/R-4.5.1/library"
+spatial      "spatial"      "C:/Program Files/R/R-4.5.1/library"
+splines      "splines"      "C:/Program Files/R/R-4.5.1/library"
+stats        "stats"        "C:/Program Files/R/R-4.5.1/library"
+stats4       "stats4"       "C:/Program Files/R/R-4.5.1/library"
+survival     "survival"     "C:/Program Files/R/R-4.5.1/library"
+tcltk        "tcltk"        "C:/Program Files/R/R-4.5.1/library"
+tools        "tools"        "C:/Program Files/R/R-4.5.1/library"
+translations "translations" "C:/Program Files/R/R-4.5.1/library"
+utils        "utils"        "C:/Program Files/R/R-4.5.1/library"
+             Version   Priority     
+base         "4.5.1"   "base"       
+boot         "1.3-31"  "recommended"
+class        "7.3-23"  "recommended"
+cluster      "2.1.8.1" "recommended"
+codetools    "0.2-20"  "recommended"
+compiler     "4.5.1"   "base"       
+datasets     "4.5.1"   "base"       
+foreign      "0.8-90"  "recommended"
+graphics     "4.5.1"   "base"       
+grDevices    "4.5.1"   "base"       
+grid         "4.5.1"   "base"       
+KernSmooth   "2.23-26" "recommended"
+lattice      "0.22-7"  "recommended"
+MASS         "7.3-65"  "recommended"
+Matrix       "1.7-3"   "recommended"
+methods      "4.5.1"   "base"       
+mgcv         "1.9-3"   "recommended"
+nlme         "3.1-168" "recommended"
+nnet         "7.3-20"  "recommended"
+parallel     "4.5.1"   "base"       
+rpart        "4.1.24"  "recommended"
+spatial      "7.3-18"  "recommended"
+splines      "4.5.1"   "base"       
+stats        "4.5.1"   "base"       
+stats4       "4.5.1"   "base"       
+survival     "3.8-3"   "recommended"
+tcltk        "4.5.1"   "base"       
+tools        "4.5.1"   "base"       
+translations "4.5.1"   NA           
+utils        "4.5.1"   "base"       
+             Depends                                          
+base         NA                                               
+boot         "R (>= 3.0.0), graphics, stats"                  
+class        "R (>= 3.0.0), stats, utils"                     
+cluster      "R (>= 3.5.0)"                                   
+codetools    "R (>= 2.1)"                                     
+compiler     NA                                               
+datasets     NA                                               
+foreign      "R (>= 4.0.0)"                                   
+graphics     NA                                               
+grDevices    NA                                               
+grid         NA                                               
+KernSmooth   "R (>= 2.5.0), stats"                            
+lattice      "R (>= 4.0.0)"                                   
+MASS         "R (>= 4.4.0), grDevices, graphics, stats, utils"
+Matrix       "R (>= 4.4), methods"                            
+methods      NA                                               
+mgcv         "R (>= 3.6.0), nlme (>= 3.1-64)"                 
+nlme         "R (>= 3.6.0)"                                   
+nnet         "R (>= 3.0.0), stats, utils"                     
+parallel     NA                                               
+rpart        "R (>= 2.15.0), graphics, stats, grDevices"      
+spatial      "R (>= 3.0.0), graphics, stats, utils"           
+splines      NA                                               
+stats        NA                                               
+stats4       NA                                               
+survival     "R (>= 3.5.0)"                                   
+tcltk        NA                                               
+tools        NA                                               
+translations NA                                               
+utils        NA                                               
+             Imports                                           
+base         NA                                                
+boot         NA                                                
+class        "MASS"                                            
+cluster      "graphics, grDevices, stats, utils"               
+codetools    NA                                                
+compiler     NA                                                
+datasets     NA                                                
+foreign      "methods, utils, stats"                           
+graphics     "grDevices"                                       
+grDevices    NA                                                
+grid         "grDevices, utils"                                
+KernSmooth   NA                                                
+lattice      "grid, grDevices, graphics, stats, utils"         
+MASS         "methods"                                         
+Matrix       "grDevices, graphics, grid, lattice, stats, utils"
+methods      "utils, stats"                                    
+mgcv         "methods, stats, graphics, Matrix, splines, utils"
+nlme         "graphics, stats, utils, lattice"                 
+nnet         NA                                                
+parallel     "tools, compiler"                                 
+rpart        NA                                                
+spatial      NA                                                
+splines      "graphics, stats"                                 
+stats        "utils, grDevices, graphics"                      
+stats4       "graphics, methods, stats"                        
+survival     "graphics, Matrix, methods, splines, stats, utils"
+tcltk        "utils"                                           
+tools        NA                                                
+translations NA                                                
+utils        NA                                                
+             LinkingTo
+base         NA       
+boot         NA       
+class        NA       
+cluster      NA       
+codetools    NA       
+compiler     NA       
+datasets     NA       
+foreign      NA       
+graphics     NA       
+grDevices    NA       
+grid         NA       
+KernSmooth   NA       
+lattice      NA       
+MASS         NA       
+Matrix       NA       
+methods      NA       
+mgcv         NA       
+nlme         NA       
+nnet         NA       
+parallel     NA       
+rpart        NA       
+spatial      NA       
+splines      NA       
+stats        NA       
+stats4       NA       
+survival     NA       
+tcltk        NA       
+tools        NA       
+translations NA       
+utils        NA       
+             Suggests                                                                
+base         "methods"                                                               
+boot         "MASS, survival"                                                        
+class        NA                                                                      
+cluster      "MASS, Matrix"                                                          
+codetools    NA                                                                      
+compiler     NA                                                                      
+datasets     NA                                                                      
+foreign      NA                                                                      
+graphics     NA                                                                      
+grDevices    "KernSmooth"                                                            
+grid         NA                                                                      
+KernSmooth   "MASS, carData"                                                         
+lattice      "KernSmooth, MASS, latticeExtra, colorspace"                            
+MASS         "lattice, nlme, nnet, survival"                                         
+Matrix       "MASS, datasets, sfsmisc, tools"                                        
+methods      "codetools"                                                             
+mgcv         "parallel, survival, MASS"                                              
+nlme         "MASS, SASmixed"                                                        
+nnet         "MASS"                                                                  
+parallel     "methods"                                                               
+rpart        "survival"                                                              
+spatial      "MASS"                                                                  
+splines      "Matrix, methods"                                                       
+stats        "MASS, Matrix, SuppDists, methods, stats4"                              
+stats4       NA                                                                      
+survival     NA                                                                      
+tcltk        NA                                                                      
+tools        "codetools, methods, xml2, curl, commonmark, knitr, xfun,\nmathjaxr, V8"
+translations NA                                                                      
+utils        "methods, xml2, commonmark, knitr, jsonlite"                            
+             Enhances                                               
+base         "chron, date, round"                                   
+boot         NA                                                     
+class        NA                                                     
+cluster      "mvoutlier, fpc, ellipse, sfsmisc"                     
+codetools    NA                                                     
+compiler     NA                                                     
+datasets     NA                                                     
+foreign      NA                                                     
+graphics     "vcd"                                                  
+grDevices    NA                                                     
+grid         NA                                                     
+KernSmooth   NA                                                     
+lattice      "chron, zoo"                                           
+MASS         NA                                                     
+Matrix       "SparseM, graph"                                       
+methods      NA                                                     
+mgcv         NA                                                     
+nlme         NA                                                     
+nnet         NA                                                     
+parallel     "snow, Rmpi, mirai"                                    
+rpart        NA                                                     
+spatial      NA                                                     
+splines      NA                                                     
+stats        "Kendall, coin, multcomp, pcaPP, pspearman, robustbase"
+stats4       NA                                                     
+survival     NA                                                     
+tcltk        NA                                                     
+tools        NA                                                     
+translations NA                                                     
+utils        NA                                                     
+             License                     License_is_FOSS
+base         "Part of R 4.5.1"           NA             
+boot         "Unlimited"                 NA             
+class        "GPL-2 | GPL-3"             NA             
+cluster      "GPL (>= 2)"                NA             
+codetools    "GPL"                       NA             
+compiler     "Part of R 4.5.1"           NA             
+datasets     "Part of R 4.5.1"           NA             
+foreign      "GPL (>= 2)"                NA             
+graphics     "Part of R 4.5.1"           NA             
+grDevices    "Part of R 4.5.1"           NA             
+grid         "Part of R 4.5.1"           NA             
+KernSmooth   "Unlimited"                 NA             
+lattice      "GPL (>= 2)"                NA             
+MASS         "GPL-2 | GPL-3"             NA             
+Matrix       "GPL (>= 2) | file LICENCE" NA             
+methods      "Part of R 4.5.1"           NA             
+mgcv         "GPL (>= 2)"                NA             
+nlme         "GPL (>= 2)"                NA             
+nnet         "GPL-2 | GPL-3"             NA             
+parallel     "Part of R 4.5.1"           NA             
+rpart        "GPL-2 | GPL-3"             NA             
+spatial      "GPL-2 | GPL-3"             NA             
+splines      "Part of R 4.5.1"           NA             
+stats        "Part of R 4.5.1"           NA             
+stats4       "Part of R 4.5.1"           NA             
+survival     "LGPL (>= 2)"               NA             
+tcltk        "Part of R 4.5.1"           NA             
+tools        "Part of R 4.5.1"           NA             
+translations "Part of R 4.5.1"           NA             
+utils        "Part of R 4.5.1"           NA             
+             License_restricts_use OS_type MD5sum NeedsCompilation
+base         NA                    NA      NA     NA              
+boot         NA                    NA      NA     "no"            
+class        NA                    NA      NA     "yes"           
+cluster      NA                    NA      NA     "yes"           
+codetools    NA                    NA      NA     "no"            
+compiler     NA                    NA      NA     NA              
+datasets     NA                    NA      NA     NA              
+foreign      NA                    NA      NA     "yes"           
+graphics     NA                    NA      NA     "yes"           
+grDevices    NA                    NA      NA     "yes"           
+grid         NA                    NA      NA     "yes"           
+KernSmooth   NA                    NA      NA     "yes"           
+lattice      NA                    NA      NA     "yes"           
+MASS         NA                    NA      NA     "yes"           
+Matrix       NA                    NA      NA     "yes"           
+methods      NA                    NA      NA     "yes"           
+mgcv         NA                    NA      NA     "yes"           
+nlme         NA                    NA      NA     "yes"           
+nnet         NA                    NA      NA     "yes"           
+parallel     NA                    NA      NA     "yes"           
+rpart        NA                    NA      NA     "yes"           
+spatial      NA                    NA      NA     "yes"           
+splines      NA                    NA      NA     "yes"           
+stats        NA                    NA      NA     "yes"           
+stats4       NA                    NA      NA     NA              
+survival     NA                    NA      NA     "yes"           
+tcltk        NA                    NA      NA     "yes"           
+tools        NA                    NA      NA     "yes"           
+translations NA                    NA      NA     NA              
+utils        NA                    NA      NA     "yes"           
+             Built  
+base         "4.5.1"
+boot         "4.5.1"
+class        "4.5.1"
+cluster      "4.5.1"
+codetools    "4.5.1"
+compiler     "4.5.1"
+datasets     "4.5.1"
+foreign      "4.5.1"
+graphics     "4.5.1"
+grDevices    "4.5.1"
+grid         "4.5.1"
+KernSmooth   "4.5.1"
+lattice      "4.5.1"
+MASS         "4.5.1"
+Matrix       "4.5.1"
+methods      "4.5.1"
+mgcv         "4.5.1"
+nlme         "4.5.1"
+nnet         "4.5.1"
+parallel     "4.5.1"
+rpart        "4.5.1"
+spatial      "4.5.1"
+splines      "4.5.1"
+stats        "4.5.1"
+stats4       "4.5.1"
+survival     "4.5.1"
+tcltk        "4.5.1"
+tools        "4.5.1"
+translations "4.5.1"
+utils        "4.5.1"
+> 
+> install.packages("shiny")
+WARNING: Rtools is required to build R packages but is not currently installed. Please download and install the appropriate version of Rtools before proceeding:
+
+https://cran.rstudio.com/bin/windows/Rtools/
+Installing package into ‘C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5’
+(as ‘lib’ is unspecified)
+also installing the dependencies ‘fs’, ‘rappdirs’, ‘Rcpp’, ‘base64enc’, ‘digest’, ‘magrittr’, ‘jquerylib’, ‘memoise’, ‘sass’, ‘httpuv’, ‘mime’, ‘jsonlite’, ‘xtable’, ‘fontawesome’, ‘htmltools’, ‘R6’, ‘sourcetools’, ‘later’, ‘promises’, ‘cli’, ‘rlang’, ‘fastmap’, ‘withr’, ‘commonmark’, ‘glue’, ‘bslib’, ‘cachem’, ‘lifecycle’
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/fs_1.6.6.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/rappdirs_0.3.3.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/Rcpp_1.1.0.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/base64enc_0.1-3.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/digest_0.6.37.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/magrittr_2.0.4.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/jquerylib_0.1.4.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/memoise_2.0.1.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/sass_0.4.10.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/httpuv_1.6.16.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/mime_0.13.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/jsonlite_2.0.0.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/xtable_1.8-4.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/fontawesome_0.5.3.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/htmltools_0.5.8.1.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/R6_2.6.1.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/sourcetools_0.1.7-1.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/later_1.4.4.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/promises_1.3.3.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/cli_3.6.5.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/rlang_1.1.6.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/fastmap_1.2.0.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/withr_3.0.2.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/commonmark_2.0.0.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/glue_1.8.0.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/bslib_0.9.0.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/cachem_1.1.0.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/lifecycle_1.0.4.zip'
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/shiny_1.11.1.zip'
+package ‘fs’ successfully unpacked and MD5 sums checked
+package ‘rappdirs’ successfully unpacked and MD5 sums checked
+package ‘Rcpp’ successfully unpacked and MD5 sums checked
+package ‘base64enc’ successfully unpacked and MD5 sums checked
+package ‘digest’ successfully unpacked and MD5 sums checked
+package ‘magrittr’ successfully unpacked and MD5 sums checked
+package ‘jquerylib’ successfully unpacked and MD5 sums checked
+package ‘memoise’ successfully unpacked and MD5 sums checked
+package ‘sass’ successfully unpacked and MD5 sums checked
+package ‘httpuv’ successfully unpacked and MD5 sums checked
+package ‘mime’ successfully unpacked and MD5 sums checked
+package ‘jsonlite’ successfully unpacked and MD5 sums checked
+package ‘xtable’ successfully unpacked and MD5 sums checked
+package ‘fontawesome’ successfully unpacked and MD5 sums checked
+package ‘htmltools’ successfully unpacked and MD5 sums checked
+package ‘R6’ successfully unpacked and MD5 sums checked
+package ‘sourcetools’ successfully unpacked and MD5 sums checked
+package ‘later’ successfully unpacked and MD5 sums checked
+package ‘promises’ successfully unpacked and MD5 sums checked
+package ‘cli’ successfully unpacked and MD5 sums checked
+package ‘rlang’ successfully unpacked and MD5 sums checked
+package ‘fastmap’ successfully unpacked and MD5 sums checked
+package ‘withr’ successfully unpacked and MD5 sums checked
+package ‘commonmark’ successfully unpacked and MD5 sums checked
+package ‘glue’ successfully unpacked and MD5 sums checked
+package ‘bslib’ successfully unpacked and MD5 sums checked
+package ‘cachem’ successfully unpacked and MD5 sums checked
+package ‘lifecycle’ successfully unpacked and MD5 sums checked
+package ‘shiny’ successfully unpacked and MD5 sums checked
+
+The downloaded binary packages are in
+	C:\Users\SergioBeamonteGonzal\AppData\Local\Temp\RtmpUf5XNX\downloaded_packages
+> library(shiny)
+> runExample("01_hello")
+
+Adjuntando el paquete: ‘bslib’
+
+The following object is masked from ‘package:utils’:
+
+    page
+
+
+Listening on http://127.0.0.1:4066
+> library(shiny)
+> library(bslib)
+> 
+> # Define UI for app that draws a histogram ----
+> ui <- page_sidebar(
++     # App title ----
++     title = "Hello Shiny!",
++     # Sidebar panel for inputs ----
++     sidebar = sidebar(
++         # Input: Slider for the number of bins ----
++         sliderInput(
++             inputId = "bins",
++             label = "Number of bins:",
++             min = 1,
++             max = 50,
++             value = 30
++         )
++     ),
++     # Output: Histogram ----
++     plotOutput(outputId = "distPlot")
++ )
+> 
+> 
+> setwd("~/")
+> setwd("C:\Users\SergioBeamonteGonzal\Documentos Locales\MASTER\Data vis")
+Error: '\U' used without hex digits in character string (<input>:1:11)
+
+> setwd("C:\\Users\\SergioBeamonteGonzal\\Documentos Locales\\MASTER\\Data vis")
+> 
+> getwd()
+[1] "C:/Users/SergioBeamonteGonzal/Documentos Locales/MASTER/Data vis"
+> runApp(example1)
+Error: objeto 'example1' no encontrado
+
+> runApp("example1")
+Error in `shinyAppDir()`:
+! No Shiny application exists at the path "example1"
+Run `rlang::last_trace()` to see where the error occurred.
+
+> getwd()
+[1] "C:/Users/SergioBeamonteGonzal/Documentos Locales/MASTER/Data vis"
+> setwd("shiny_tutorial")
+Error en setwd("shiny_tutorial"): 
+  no es posible cambiar el directorio de trabajo
+
+> setwd("shiny tutorial")
+> 
+> runApp("example1")
+Error en func(fname, ...): app.R did not return a shiny.appobj object.
+
+> runApp("example1")
+
+Listening on http://127.0.0.1:4066
+> 

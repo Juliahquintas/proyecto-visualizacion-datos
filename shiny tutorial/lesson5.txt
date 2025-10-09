@@ -1,0 +1,646 @@
+library(bslib)
+library(shiny)
+source("helpers.R")
+
+# Cargar datos (archivo RDS con datos del censo por condado)
+counties <- readRDS("data/counties.rds")
+
+# Interfaz de usuario
+ui <- page_sidebar(
+  title = "censusVis",
+  sidebar = sidebar(
+    helpText("Create demographic maps with information from the 2010 US Census."),
+    
+    selectInput("var",
+                label = "Choose a variable to display",
+                choices = c("Percent White",
+                            "Percent Black",
+                            "Percent Hispanic",
+                            "Percent Asian"),
+                selected = "Percent White"),
+    
+    sliderInput("range",
+                label = "Range of interest:",
+                min = 0, max = 100, value = c(0, 100))
+  ),
+  
+  card(
+    card_header("Map Output"),
+    card_body(plotOutput("map"))
+  )
+)
+
+# Lógica del servidor
+server <- function(input, output) {
+  output$map <- renderPlot({
+    data <- switch(input$var,
+                   "Percent White" = counties$white,
+                   "Percent Black" = counties$black,
+                   "Percent Hispanic" = counties$hispanic,
+                   "Percent Asian" = counties$asian)
+    
+    color <- switch(input$var,
+                    "Percent White" = "darkgreen",
+                    "Percent Black" = "black",
+                    "Percent Hispanic" = "darkorange",
+                    "Percent Asian" = "darkviolet")
+    
+    legend <- switch(input$var,
+                     "Percent White" = "% White",
+                     "Percent Black" = "% Black",
+                     "Percent Hispanic" = "% Hispanic",
+                     "Percent Asian" = "% Asian")
+    
+    percent_map(data, color, legend, min = input$range[1], max = input$range[2])
+  })
+}
+
+shinyApp(ui = ui, server = server)
+
+
+
+> getwd()
+[1] "C:/Users/SergioBeamonteGonzal/Documentos Locales/MASTER/Data vis/shiny tutorial"
+> package()
+Error en package(): no se pudo encontrar la función "package"
+
+> libraries.package()
+Error en libraries.package(): 
+  no se pudo encontrar la función "libraries.package"
+
+> library.package()
+Error en library.package(): 
+  no se pudo encontrar la función "library.package"
+
+> install.packages("shiny")
+Restarting R session...
+> install.packages("shiny")
+WARNING: Rtools is required to build R packages but is not currently installed. Please download and install the appropriate version of Rtools before proceeding:
+
+https://cran.rstudio.com/bin/windows/Rtools/
+Installing package into ‘C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5’
+(as ‘lib’ is unspecified)
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/shiny_1.11.1.zip'
+Content type 'application/zip' length 4516565 bytes (4.3 MB)
+downloaded 4.3 MB
+
+package ‘shiny’ successfully unpacked and MD5 sums checked
+
+The downloaded binary packages are in
+	C:\Users\SergioBeamonteGonzal\AppData\Local\Temp\Rtmp6NBK8n\downloaded_packages
+> installed.packages()
+             Package        LibPath                                                        
+base64enc    "base64enc"    "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+bsicons      "bsicons"      "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+bslib        "bslib"        "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+cachem       "cachem"       "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+cli          "cli"          "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+commonmark   "commonmark"   "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+crayon       "crayon"       "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+digest       "digest"       "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+fastmap      "fastmap"      "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+fontawesome  "fontawesome"  "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+fs           "fs"           "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+glue         "glue"         "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+htmltools    "htmltools"    "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+httpuv       "httpuv"       "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+jquerylib    "jquerylib"    "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+jsonlite     "jsonlite"     "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+later        "later"        "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+lifecycle    "lifecycle"    "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+magrittr     "magrittr"     "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+mapproj      "mapproj"      "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+maps         "maps"         "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+memoise      "memoise"      "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+mime         "mime"         "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+promises     "promises"     "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+R6           "R6"           "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+rappdirs     "rappdirs"     "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+Rcpp         "Rcpp"         "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+rlang        "rlang"        "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+sass         "sass"         "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+shiny        "shiny"        "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+sourcetools  "sourcetools"  "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+withr        "withr"        "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+xtable       "xtable"       "C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5"
+base         "base"         "C:/Program Files/R/R-4.5.1/library"                           
+boot         "boot"         "C:/Program Files/R/R-4.5.1/library"                           
+class        "class"        "C:/Program Files/R/R-4.5.1/library"                           
+cluster      "cluster"      "C:/Program Files/R/R-4.5.1/library"                           
+codetools    "codetools"    "C:/Program Files/R/R-4.5.1/library"                           
+compiler     "compiler"     "C:/Program Files/R/R-4.5.1/library"                           
+datasets     "datasets"     "C:/Program Files/R/R-4.5.1/library"                           
+foreign      "foreign"      "C:/Program Files/R/R-4.5.1/library"                           
+graphics     "graphics"     "C:/Program Files/R/R-4.5.1/library"                           
+grDevices    "grDevices"    "C:/Program Files/R/R-4.5.1/library"                           
+grid         "grid"         "C:/Program Files/R/R-4.5.1/library"                           
+KernSmooth   "KernSmooth"   "C:/Program Files/R/R-4.5.1/library"                           
+lattice      "lattice"      "C:/Program Files/R/R-4.5.1/library"                           
+MASS         "MASS"         "C:/Program Files/R/R-4.5.1/library"                           
+Matrix       "Matrix"       "C:/Program Files/R/R-4.5.1/library"                           
+methods      "methods"      "C:/Program Files/R/R-4.5.1/library"                           
+mgcv         "mgcv"         "C:/Program Files/R/R-4.5.1/library"                           
+nlme         "nlme"         "C:/Program Files/R/R-4.5.1/library"                           
+nnet         "nnet"         "C:/Program Files/R/R-4.5.1/library"                           
+parallel     "parallel"     "C:/Program Files/R/R-4.5.1/library"                           
+rpart        "rpart"        "C:/Program Files/R/R-4.5.1/library"                           
+spatial      "spatial"      "C:/Program Files/R/R-4.5.1/library"                           
+splines      "splines"      "C:/Program Files/R/R-4.5.1/library"                           
+stats        "stats"        "C:/Program Files/R/R-4.5.1/library"                           
+stats4       "stats4"       "C:/Program Files/R/R-4.5.1/library"                           
+survival     "survival"     "C:/Program Files/R/R-4.5.1/library"                           
+tcltk        "tcltk"        "C:/Program Files/R/R-4.5.1/library"                           
+tools        "tools"        "C:/Program Files/R/R-4.5.1/library"                           
+translations "translations" "C:/Program Files/R/R-4.5.1/library"                           
+             Version   Priority      Depends                                          
+base64enc    "0.1-3"   NA            "R (>= 2.9.0)"                                   
+bsicons      "0.1.2"   NA            "R (>= 2.10)"                                    
+bslib        "0.9.0"   NA            "R (>= 2.10)"                                    
+cachem       "1.1.0"   NA            NA                                               
+cli          "3.6.5"   NA            "R (>= 3.4)"                                     
+commonmark   "2.0.0"   NA            NA                                               
+crayon       "1.5.3"   NA            NA                                               
+digest       "0.6.37"  NA            "R (>= 3.3.0)"                                   
+fastmap      "1.2.0"   NA            NA                                               
+fontawesome  "0.5.3"   NA            "R (>= 3.3.0)"                                   
+fs           "1.6.6"   NA            "R (>= 3.6)"                                     
+glue         "1.8.0"   NA            "R (>= 3.6)"                                     
+htmltools    "0.5.8.1" NA            "R (>= 2.14.1)"                                  
+httpuv       "1.6.16"  NA            "R (>= 2.15.1)"                                  
+jquerylib    "0.1.4"   NA            NA                                               
+jsonlite     "2.0.0"   NA            "methods"                                        
+later        "1.4.4"   NA            NA                                               
+lifecycle    "1.0.4"   NA            "R (>= 3.6)"                                     
+magrittr     "2.0.4"   NA            "R (>= 3.4.0)"                                   
+mapproj      "1.2.12"  NA            "R (>= 3.0.0), maps (>= 2.3-0)"                  
+maps         "3.4.3"   NA            "R (>= 3.5.0)"                                   
+memoise      "2.0.1"   NA            NA                                               
+mime         "0.13"    NA            NA                                               
+promises     "1.3.3"   NA            NA                                               
+R6           "2.6.1"   NA            "R (>= 3.6)"                                     
+rappdirs     "0.3.3"   NA            "R (>= 3.2)"                                     
+Rcpp         "1.1.0"   NA            NA                                               
+rlang        "1.1.6"   NA            "R (>= 3.5.0)"                                   
+sass         "0.4.10"  NA            NA                                               
+shiny        "1.11.1"  NA            "R (>= 3.0.2), methods"                          
+sourcetools  "0.1.7-1" NA            "R (>= 3.0.2)"                                   
+withr        "3.0.2"   NA            "R (>= 3.6.0)"                                   
+xtable       "1.8-4"   NA            "R (>= 2.10.0)"                                  
+base         "4.5.1"   "base"        NA                                               
+boot         "1.3-31"  "recommended" "R (>= 3.0.0), graphics, stats"                  
+class        "7.3-23"  "recommended" "R (>= 3.0.0), stats, utils"                     
+cluster      "2.1.8.1" "recommended" "R (>= 3.5.0)"                                   
+codetools    "0.2-20"  "recommended" "R (>= 2.1)"                                     
+compiler     "4.5.1"   "base"        NA                                               
+datasets     "4.5.1"   "base"        NA                                               
+foreign      "0.8-90"  "recommended" "R (>= 4.0.0)"                                   
+graphics     "4.5.1"   "base"        NA                                               
+grDevices    "4.5.1"   "base"        NA                                               
+grid         "4.5.1"   "base"        NA                                               
+KernSmooth   "2.23-26" "recommended" "R (>= 2.5.0), stats"                            
+lattice      "0.22-7"  "recommended" "R (>= 4.0.0)"                                   
+MASS         "7.3-65"  "recommended" "R (>= 4.4.0), grDevices, graphics, stats, utils"
+Matrix       "1.7-3"   "recommended" "R (>= 4.4), methods"                            
+methods      "4.5.1"   "base"        NA                                               
+mgcv         "1.9-3"   "recommended" "R (>= 3.6.0), nlme (>= 3.1-64)"                 
+nlme         "3.1-168" "recommended" "R (>= 3.6.0)"                                   
+nnet         "7.3-20"  "recommended" "R (>= 3.0.0), stats, utils"                     
+parallel     "4.5.1"   "base"        NA                                               
+rpart        "4.1.24"  "recommended" "R (>= 2.15.0), graphics, stats, grDevices"      
+spatial      "7.3-18"  "recommended" "R (>= 3.0.0), graphics, stats, utils"           
+splines      "4.5.1"   "base"        NA                                               
+stats        "4.5.1"   "base"        NA                                               
+stats4       "4.5.1"   "base"        NA                                               
+survival     "3.8-3"   "recommended" "R (>= 3.5.0)"                                   
+tcltk        "4.5.1"   "base"        NA                                               
+tools        "4.5.1"   "base"        NA                                               
+translations "4.5.1"   NA            NA                                               
+             Imports                                                                                                                                                                                                                                                                                                                                                          
+base64enc    NA                                                                                                                                                                                                                                                                                                                                                               
+bsicons      "cli, htmltools, rlang, utils"                                                                                                                                                                                                                                                                                                                                   
+bslib        "base64enc, cachem, fastmap (>= 1.1.1), grDevices, htmltools\n(>= 0.5.8), jquerylib (>= 0.1.3), jsonlite, lifecycle, memoise\n(>= 2.0.1), mime, rlang, sass (>= 0.4.9)"                                                                                                                                                                                          
+cachem       "rlang, fastmap (>= 1.2.0)"                                                                                                                                                                                                                                                                                                                                      
+cli          "utils"                                                                                                                                                                                                                                                                                                                                                          
+commonmark   NA                                                                                                                                                                                                                                                                                                                                                               
+crayon       "grDevices, methods, utils"                                                                                                                                                                                                                                                                                                                                      
+digest       "utils"                                                                                                                                                                                                                                                                                                                                                          
+fastmap      NA                                                                                                                                                                                                                                                                                                                                                               
+fontawesome  "rlang (>= 1.0.6), htmltools (>= 0.5.1.1)"                                                                                                                                                                                                                                                                                                                       
+fs           "methods"                                                                                                                                                                                                                                                                                                                                                        
+glue         "methods"                                                                                                                                                                                                                                                                                                                                                        
+htmltools    "base64enc, digest, fastmap (>= 1.1.0), grDevices, rlang (>=\n1.0.0), utils"                                                                                                                                                                                                                                                                                     
+httpuv       "later (>= 0.8.0), promises, R6, Rcpp (>= 1.0.7), utils"                                                                                                                                                                                                                                                                                                         
+jquerylib    "htmltools"                                                                                                                                                                                                                                                                                                                                                      
+jsonlite     NA                                                                                                                                                                                                                                                                                                                                                               
+later        "Rcpp (>= 0.12.9), rlang"                                                                                                                                                                                                                                                                                                                                        
+lifecycle    "cli (>= 3.4.0), glue, rlang (>= 1.1.0)"                                                                                                                                                                                                                                                                                                                         
+magrittr     NA                                                                                                                                                                                                                                                                                                                                                               
+mapproj      "stats, graphics"                                                                                                                                                                                                                                                                                                                                                
+maps         "graphics, utils"                                                                                                                                                                                                                                                                                                                                                
+memoise      "rlang (>= 0.4.10), cachem"                                                                                                                                                                                                                                                                                                                                      
+mime         "tools"                                                                                                                                                                                                                                                                                                                                                          
+promises     "fastmap (>= 1.1.0), later, magrittr (>= 1.5), R6, Rcpp, rlang,\nstats"                                                                                                                                                                                                                                                                                          
+R6           NA                                                                                                                                                                                                                                                                                                                                                               
+rappdirs     NA                                                                                                                                                                                                                                                                                                                                                               
+Rcpp         "methods, utils"                                                                                                                                                                                                                                                                                                                                                 
+rlang        "utils"                                                                                                                                                                                                                                                                                                                                                          
+sass         "fs (>= 1.2.4), rlang (>= 0.4.10), htmltools (>= 0.5.1), R6,\nrappdirs"                                                                                                                                                                                                                                                                                          
+shiny        "utils, grDevices, httpuv (>= 1.5.2), mime (>= 0.3), jsonlite\n(>= 0.9.16), xtable, fontawesome (>= 0.4.0), htmltools (>=\n0.5.4), R6 (>= 2.0), sourcetools, later (>= 1.0.0), promises\n(>= 1.3.2), tools, cli, rlang (>= 0.4.10), fastmap (>= 1.1.1),\nwithr, commonmark (>= 1.7), glue (>= 1.3.2), bslib (>= 0.6.0),\ncachem (>= 1.1.0), lifecycle (>= 0.2.0)"
+sourcetools  NA                                                                                                                                                                                                                                                                                                                                                               
+withr        "graphics, grDevices"                                                                                                                                                                                                                                                                                                                                            
+xtable       "stats, utils"                                                                                                                                                                                                                                                                                                                                                   
+base         NA                                                                                                                                                                                                                                                                                                                                                               
+boot         NA                                                                                                                                                                                                                                                                                                                                                               
+class        "MASS"                                                                                                                                                                                                                                                                                                                                                           
+cluster      "graphics, grDevices, stats, utils"                                                                                                                                                                                                                                                                                                                              
+codetools    NA                                                                                                                                                                                                                                                                                                                                                               
+compiler     NA                                                                                                                                                                                                                                                                                                                                                               
+datasets     NA                                                                                                                                                                                                                                                                                                                                                               
+foreign      "methods, utils, stats"                                                                                                                                                                                                                                                                                                                                          
+graphics     "grDevices"                                                                                                                                                                                                                                                                                                                                                      
+grDevices    NA                                                                                                                                                                                                                                                                                                                                                               
+grid         "grDevices, utils"                                                                                                                                                                                                                                                                                                                                               
+KernSmooth   NA                                                                                                                                                                                                                                                                                                                                                               
+lattice      "grid, grDevices, graphics, stats, utils"                                                                                                                                                                                                                                                                                                                        
+MASS         "methods"                                                                                                                                                                                                                                                                                                                                                        
+Matrix       "grDevices, graphics, grid, lattice, stats, utils"                                                                                                                                                                                                                                                                                                               
+methods      "utils, stats"                                                                                                                                                                                                                                                                                                                                                   
+mgcv         "methods, stats, graphics, Matrix, splines, utils"                                                                                                                                                                                                                                                                                                               
+nlme         "graphics, stats, utils, lattice"                                                                                                                                                                                                                                                                                                                                
+nnet         NA                                                                                                                                                                                                                                                                                                                                                               
+parallel     "tools, compiler"                                                                                                                                                                                                                                                                                                                                                
+rpart        NA                                                                                                                                                                                                                                                                                                                                                               
+spatial      NA                                                                                                                                                                                                                                                                                                                                                               
+splines      "graphics, stats"                                                                                                                                                                                                                                                                                                                                                
+stats        "utils, grDevices, graphics"                                                                                                                                                                                                                                                                                                                                     
+stats4       "graphics, methods, stats"                                                                                                                                                                                                                                                                                                                                       
+survival     "graphics, Matrix, methods, splines, stats, utils"                                                                                                                                                                                                                                                                                                               
+tcltk        "utils"                                                                                                                                                                                                                                                                                                                                                          
+tools        NA                                                                                                                                                                                                                                                                                                                                                               
+translations NA                                                                                                                                                                                                                                                                                                                                                               
+             LinkingTo    
+base64enc    NA           
+bsicons      NA           
+bslib        NA           
+cachem       NA           
+cli          NA           
+commonmark   NA           
+crayon       NA           
+digest       NA           
+fastmap      NA           
+fontawesome  NA           
+fs           NA           
+glue         NA           
+htmltools    NA           
+httpuv       "later, Rcpp"
+jquerylib    NA           
+jsonlite     NA           
+later        "Rcpp"       
+lifecycle    NA           
+magrittr     NA           
+mapproj      NA           
+maps         NA           
+memoise      NA           
+mime         NA           
+promises     "later, Rcpp"
+R6           NA           
+rappdirs     NA           
+Rcpp         NA           
+rlang        NA           
+sass         NA           
+shiny        NA           
+sourcetools  NA           
+withr        NA           
+xtable       NA           
+base         NA           
+boot         NA           
+class        NA           
+cluster      NA           
+codetools    NA           
+compiler     NA           
+datasets     NA           
+foreign      NA           
+graphics     NA           
+grDevices    NA           
+grid         NA           
+KernSmooth   NA           
+lattice      NA           
+MASS         NA           
+Matrix       NA           
+methods      NA           
+mgcv         NA           
+nlme         NA           
+nnet         NA           
+parallel     NA           
+rpart        NA           
+spatial      NA           
+splines      NA           
+stats        NA           
+stats4       NA           
+survival     NA           
+tcltk        NA           
+tools        NA           
+translations NA           
+             Suggests                                                                                                                                                                                                                               
+base64enc    NA                                                                                                                                                                                                                                     
+bsicons      "bslib, processx, testthat, webshot2, withr"                                                                                                                                                                                           
+bslib        "bsicons, curl, fontawesome, future, ggplot2, knitr, magrittr,\nrappdirs, rmarkdown (>= 2.7), shiny (> 1.8.1), testthat,\nthematic, tools, utils, withr, yaml"                                                                         
+cachem       "testthat"                                                                                                                                                                                                                             
+cli          "callr, covr, crayon, digest, glue (>= 1.6.0), grDevices,\nhtmltools, htmlwidgets, knitr, methods, processx, ps (>=\n1.3.4.9000), rlang (>= 1.0.2.9003), rmarkdown, rprojroot,\nrstudioapi, testthat (>= 3.2.0), tibble, whoami, withr"
+commonmark   "curl, testthat, xml2"                                                                                                                                                                                                                 
+crayon       "mockery, rstudioapi, testthat, withr"                                                                                                                                                                                                 
+digest       "tinytest, simplermarkdown"                                                                                                                                                                                                            
+fastmap      "testthat (>= 2.1.1)"                                                                                                                                                                                                                  
+fontawesome  "covr, dplyr (>= 1.0.8), gt (>= 0.9.0), knitr (>= 1.31),\ntestthat (>= 3.0.0), rsvg"                                                                                                                                                   
+fs           "covr, crayon, knitr, pillar (>= 1.0.0), rmarkdown, spelling,\ntestthat (>= 3.0.0), tibble (>= 1.1.0), vctrs (>= 0.3.0), withr"                                                                                                        
+glue         "crayon, DBI (>= 1.2.0), dplyr, knitr, magrittr, rlang,\nrmarkdown, RSQLite, testthat (>= 3.2.0), vctrs (>= 0.3.0),\nwaldo (>= 0.5.3), withr"                                                                                          
+htmltools    "Cairo, markdown, ragg, shiny, testthat, withr"                                                                                                                                                                                        
+httpuv       "callr, curl, jsonlite, testthat, websocket"                                                                                                                                                                                           
+jquerylib    "testthat"                                                                                                                                                                                                                             
+jsonlite     "httr, vctrs, testthat, knitr, rmarkdown, R.rsp, sf"                                                                                                                                                                                   
+later        "knitr, nanonext, rmarkdown, testthat (>= 3.0.0)"                                                                                                                                                                                      
+lifecycle    "covr, crayon, knitr, lintr, rmarkdown, testthat (>= 3.0.1),\ntibble, tidyverse, tools, vctrs, withr"                                                                                                                                  
+magrittr     "covr, knitr, rlang, rmarkdown, testthat"                                                                                                                                                                                              
+mapproj      NA                                                                                                                                                                                                                                     
+maps         "mapproj (>= 1.2-0), mapdata (>= 2.3.0), sf, rnaturalearth"                                                                                                                                                                            
+memoise      "digest, aws.s3, covr, googleAuthR, googleCloudStorageR, httr,\ntestthat"                                                                                                                                                              
+mime         NA                                                                                                                                                                                                                                     
+promises     "future (>= 1.21.0), knitr, purrr, rmarkdown, spelling,\ntestthat (>= 3.0.0), vembedr"                                                                                                                                                 
+R6           "lobstr, testthat (>= 3.0.0)"                                                                                                                                                                                                          
+rappdirs     "roxygen2, testthat (>= 3.0.0), covr, withr"                                                                                                                                                                                           
+Rcpp         "tinytest, inline, rbenchmark, pkgKitten (>= 0.1.2)"                                                                                                                                                                                   
+rlang        "cli (>= 3.1.0), covr, crayon, desc, fs, glue, knitr,\nmagrittr, methods, pillar, pkgload, rmarkdown, stats, testthat\n(>= 3.2.0), tibble, usethis, vctrs (>= 0.2.3), withr"                                                           
+sass         "testthat, knitr, rmarkdown, withr, shiny, curl"                                                                                                                                                                                       
+shiny        "coro (>= 1.1.0), datasets, DT, Cairo (>= 1.5-5), testthat (>=\n3.2.1), knitr (>= 1.6), markdown, rmarkdown, ggplot2, reactlog\n(>= 1.0.0), magrittr, yaml, mirai, future, dygraphs, ragg,\nshowtext, sass, watcher"                   
+sourcetools  "testthat"                                                                                                                                                                                                                             
+withr        "callr, DBI, knitr, methods, rlang, rmarkdown (>= 2.12),\nRSQLite, testthat (>= 3.0.0)"                                                                                                                                                
+xtable       "knitr, plm, zoo, survival"                                                                                                                                                                                                            
+base         "methods"                                                                                                                                                                                                                              
+boot         "MASS, survival"                                                                                                                                                                                                                       
+class        NA                                                                                                                                                                                                                                     
+cluster      "MASS, Matrix"                                                                                                                                                                                                                         
+codetools    NA                                                                                                                                                                                                                                     
+compiler     NA                                                                                                                                                                                                                                     
+datasets     NA                                                                                                                                                                                                                                     
+foreign      NA                                                                                                                                                                                                                                     
+graphics     NA                                                                                                                                                                                                                                     
+grDevices    "KernSmooth"                                                                                                                                                                                                                           
+grid         NA                                                                                                                                                                                                                                     
+KernSmooth   "MASS, carData"                                                                                                                                                                                                                        
+lattice      "KernSmooth, MASS, latticeExtra, colorspace"                                                                                                                                                                                           
+MASS         "lattice, nlme, nnet, survival"                                                                                                                                                                                                        
+Matrix       "MASS, datasets, sfsmisc, tools"                                                                                                                                                                                                       
+methods      "codetools"                                                                                                                                                                                                                            
+mgcv         "parallel, survival, MASS"                                                                                                                                                                                                             
+nlme         "MASS, SASmixed"                                                                                                                                                                                                                       
+nnet         "MASS"                                                                                                                                                                                                                                 
+parallel     "methods"                                                                                                                                                                                                                              
+rpart        "survival"                                                                                                                                                                                                                             
+spatial      "MASS"                                                                                                                                                                                                                                 
+splines      "Matrix, methods"                                                                                                                                                                                                                      
+stats        "MASS, Matrix, SuppDists, methods, stats4"                                                                                                                                                                                             
+stats4       NA                                                                                                                                                                                                                                     
+survival     NA                                                                                                                                                                                                                                     
+tcltk        NA                                                                                                                                                                                                                                     
+tools        "codetools, methods, xml2, curl, commonmark, knitr, xfun,\nmathjaxr, V8"                                                                                                                                                               
+translations NA                                                                                                                                                                                                                                     
+             Enhances                                               
+base64enc    "png"                                                  
+bsicons      NA                                                     
+bslib        NA                                                     
+cachem       NA                                                     
+cli          NA                                                     
+commonmark   NA                                                     
+crayon       NA                                                     
+digest       NA                                                     
+fastmap      NA                                                     
+fontawesome  NA                                                     
+fs           NA                                                     
+glue         NA                                                     
+htmltools    "knitr"                                                
+httpuv       NA                                                     
+jquerylib    NA                                                     
+jsonlite     NA                                                     
+later        NA                                                     
+lifecycle    NA                                                     
+magrittr     NA                                                     
+mapproj      NA                                                     
+maps         NA                                                     
+memoise      NA                                                     
+mime         NA                                                     
+promises     NA                                                     
+R6           NA                                                     
+rappdirs     NA                                                     
+Rcpp         NA                                                     
+rlang        "winch"                                                
+sass         NA                                                     
+shiny        NA                                                     
+sourcetools  NA                                                     
+withr        NA                                                     
+xtable       NA                                                     
+base         "chron, date, round"                                   
+boot         NA                                                     
+class        NA                                                     
+cluster      "mvoutlier, fpc, ellipse, sfsmisc"                     
+codetools    NA                                                     
+compiler     NA                                                     
+datasets     NA                                                     
+foreign      NA                                                     
+graphics     "vcd"                                                  
+grDevices    NA                                                     
+grid         NA                                                     
+KernSmooth   NA                                                     
+lattice      "chron, zoo"                                           
+MASS         NA                                                     
+Matrix       "SparseM, graph"                                       
+methods      NA                                                     
+mgcv         NA                                                     
+nlme         NA                                                     
+nnet         NA                                                     
+parallel     "snow, Rmpi, mirai"                                    
+rpart        NA                                                     
+spatial      NA                                                     
+splines      NA                                                     
+stats        "Kendall, coin, multcomp, pcaPP, pspearman, robustbase"
+stats4       NA                                                     
+survival     NA                                                     
+tcltk        NA                                                     
+tools        NA                                                     
+translations NA                                                     
+             License                       License_is_FOSS License_restricts_use OS_type MD5sum
+base64enc    "GPL-2 | GPL-3"               NA              NA                    NA      NA    
+bsicons      "MIT + file LICENSE"          NA              NA                    NA      NA    
+bslib        "MIT + file LICENSE"          NA              NA                    NA      NA    
+cachem       "MIT + file LICENSE"          NA              NA                    NA      NA    
+cli          "MIT + file LICENSE"          NA              NA                    NA      NA    
+commonmark   "BSD_2_clause + file LICENSE" NA              NA                    NA      NA    
+crayon       "MIT + file LICENSE"          NA              NA                    NA      NA    
+digest       "GPL (>= 2)"                  NA              NA                    NA      NA    
+fastmap      "MIT + file LICENSE"          NA              NA                    NA      NA    
+fontawesome  "MIT + file LICENSE"          NA              NA                    NA      NA    
+fs           "MIT + file LICENSE"          NA              NA                    NA      NA    
+glue         "MIT + file LICENSE"          NA              NA                    NA      NA    
+htmltools    "GPL (>= 2)"                  NA              NA                    NA      NA    
+httpuv       "GPL (>= 2) | file LICENSE"   NA              NA                    NA      NA    
+jquerylib    "MIT + file LICENSE"          NA              NA                    NA      NA    
+jsonlite     "MIT + file LICENSE"          NA              NA                    NA      NA    
+later        "MIT + file LICENSE"          NA              NA                    NA      NA    
+lifecycle    "MIT + file LICENSE"          NA              NA                    NA      NA    
+magrittr     "MIT + file LICENSE"          NA              NA                    NA      NA    
+mapproj      "Lucent Public License"       NA              NA                    NA      NA    
+maps         "GPL-2"                       NA              NA                    NA      NA    
+memoise      "MIT + file LICENSE"          NA              NA                    NA      NA    
+mime         "GPL"                         NA              NA                    NA      NA    
+promises     "MIT + file LICENSE"          NA              NA                    NA      NA    
+R6           "MIT + file LICENSE"          NA              NA                    NA      NA    
+rappdirs     "MIT + file LICENSE"          NA              NA                    NA      NA    
+Rcpp         "GPL (>= 2)"                  NA              NA                    NA      NA    
+rlang        "MIT + file LICENSE"          NA              NA                    NA      NA    
+sass         "MIT + file LICENSE"          NA              NA                    NA      NA    
+shiny        "GPL-3 | file LICENSE"        NA              NA                    NA      NA    
+sourcetools  "MIT + file LICENSE"          NA              NA                    NA      NA    
+withr        "MIT + file LICENSE"          NA              NA                    NA      NA    
+xtable       "GPL (>= 2)"                  NA              NA                    NA      NA    
+base         "Part of R 4.5.1"             NA              NA                    NA      NA    
+boot         "Unlimited"                   NA              NA                    NA      NA    
+class        "GPL-2 | GPL-3"               NA              NA                    NA      NA    
+cluster      "GPL (>= 2)"                  NA              NA                    NA      NA    
+codetools    "GPL"                         NA              NA                    NA      NA    
+compiler     "Part of R 4.5.1"             NA              NA                    NA      NA    
+datasets     "Part of R 4.5.1"             NA              NA                    NA      NA    
+foreign      "GPL (>= 2)"                  NA              NA                    NA      NA    
+graphics     "Part of R 4.5.1"             NA              NA                    NA      NA    
+grDevices    "Part of R 4.5.1"             NA              NA                    NA      NA    
+grid         "Part of R 4.5.1"             NA              NA                    NA      NA    
+KernSmooth   "Unlimited"                   NA              NA                    NA      NA    
+lattice      "GPL (>= 2)"                  NA              NA                    NA      NA    
+MASS         "GPL-2 | GPL-3"               NA              NA                    NA      NA    
+Matrix       "GPL (>= 2) | file LICENCE"   NA              NA                    NA      NA    
+methods      "Part of R 4.5.1"             NA              NA                    NA      NA    
+mgcv         "GPL (>= 2)"                  NA              NA                    NA      NA    
+nlme         "GPL (>= 2)"                  NA              NA                    NA      NA    
+nnet         "GPL-2 | GPL-3"               NA              NA                    NA      NA    
+parallel     "Part of R 4.5.1"             NA              NA                    NA      NA    
+rpart        "GPL-2 | GPL-3"               NA              NA                    NA      NA    
+spatial      "GPL-2 | GPL-3"               NA              NA                    NA      NA    
+splines      "Part of R 4.5.1"             NA              NA                    NA      NA    
+stats        "Part of R 4.5.1"             NA              NA                    NA      NA    
+stats4       "Part of R 4.5.1"             NA              NA                    NA      NA    
+survival     "LGPL (>= 2)"                 NA              NA                    NA      NA    
+tcltk        "Part of R 4.5.1"             NA              NA                    NA      NA    
+tools        "Part of R 4.5.1"             NA              NA                    NA      NA    
+translations "Part of R 4.5.1"             NA              NA                    NA      NA    
+             NeedsCompilation Built  
+base64enc    "yes"            "4.5.0"
+bsicons      "no"             "4.5.1"
+bslib        "no"             "4.5.1"
+cachem       "yes"            "4.5.1"
+cli          "yes"            "4.5.1"
+commonmark   "yes"            "4.5.1"
+crayon       "no"             "4.5.1"
+digest       "yes"            "4.5.1"
+fastmap      "yes"            "4.5.1"
+fontawesome  "no"             "4.5.1"
+fs           "yes"            "4.5.1"
+glue         "yes"            "4.5.1"
+htmltools    "yes"            "4.5.1"
+httpuv       "yes"            "4.5.1"
+jquerylib    "no"             "4.5.1"
+jsonlite     "yes"            "4.5.1"
+later        "yes"            "4.5.1"
+lifecycle    "no"             "4.5.1"
+magrittr     "yes"            "4.5.1"
+mapproj      "yes"            "4.5.1"
+maps         "yes"            "4.5.1"
+memoise      "no"             "4.5.1"
+mime         "yes"            "4.5.0"
+promises     "yes"            "4.5.1"
+R6           "no"             "4.5.1"
+rappdirs     "yes"            "4.5.1"
+Rcpp         "yes"            "4.5.1"
+rlang        "yes"            "4.5.1"
+sass         "yes"            "4.5.1"
+shiny        "no"             "4.5.1"
+sourcetools  "yes"            "4.5.1"
+withr        "no"             "4.5.1"
+xtable       "no"             "4.5.1"
+base         NA               "4.5.1"
+boot         "no"             "4.5.1"
+class        "yes"            "4.5.1"
+cluster      "yes"            "4.5.1"
+codetools    "no"             "4.5.1"
+compiler     NA               "4.5.1"
+datasets     NA               "4.5.1"
+foreign      "yes"            "4.5.1"
+graphics     "yes"            "4.5.1"
+grDevices    "yes"            "4.5.1"
+grid         "yes"            "4.5.1"
+KernSmooth   "yes"            "4.5.1"
+lattice      "yes"            "4.5.1"
+MASS         "yes"            "4.5.1"
+Matrix       "yes"            "4.5.1"
+methods      "yes"            "4.5.1"
+mgcv         "yes"            "4.5.1"
+nlme         "yes"            "4.5.1"
+nnet         "yes"            "4.5.1"
+parallel     "yes"            "4.5.1"
+rpart        "yes"            "4.5.1"
+spatial      "yes"            "4.5.1"
+splines      "yes"            "4.5.1"
+stats        "yes"            "4.5.1"
+stats4       NA               "4.5.1"
+survival     "yes"            "4.5.1"
+tcltk        "yes"            "4.5.1"
+tools        "yes"            "4.5.1"
+translations NA               "4.5.1"
+ [ reached 'max' / getOption("max.print") -- omitted 1 row ]
+> 
+> runApp("ex5")
+Error en runApp("ex5"): no se pudo encontrar la función "runApp"
+
+> install(bslib)
+Error en install(bslib): no se pudo encontrar la función "install"
+
+> install.packages(bslib)
+Error: objeto 'bslib' no encontrado
+
+> install.packages("bslib")
+WARNING: Rtools is required to build R packages but is not currently installed. Please download and install the appropriate version of Rtools before proceeding:
+
+https://cran.rstudio.com/bin/windows/Rtools/
+Installing package into ‘C:/Users/SergioBeamonteGonzal/AppData/Local/R/win-library/4.5’
+(as ‘lib’ is unspecified)
+probando la URL 'https://cran.rstudio.com/bin/windows/contrib/4.5/bslib_0.9.0.zip'
+Content type 'application/zip' length 5924477 bytes (5.7 MB)
+downloaded 5.7 MB
+
+package ‘bslib’ successfully unpacked and MD5 sums checked
+
+The downloaded binary packages are in
+	C:\Users\SergioBeamonteGonzal\AppData\Local\Temp\Rtmp6NBK8n\downloaded_packages
+> runApp("ex5")
+Error en runApp("ex5"): no se pudo encontrar la función "runApp"
+
+> library(shiny)
+> runApp("census-app")
+Error in `shinyAppDir()`:
+! No Shiny application exists at the path "census-app"
+Run `rlang::last_trace()` to see where the error occurred.
+
+> library(shiny)
+> runApp("ex5")
+
+Adjuntando el paquete: ‘bslib’
+
+The following object is masked from ‘package:utils’:
+
+    page
+
+Warning in gzfile(file, "rb") :
+  cannot open compressed file 'data/counties.rds', probable reason 'No such file or directory'
+Error en gzfile(file, "rb"): no se puede abrir la conexión
+
+> library(shiny)
+> runApp("ex5")
+
+Listening on http://127.0.0.1:5054
