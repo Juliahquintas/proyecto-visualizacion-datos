@@ -42,16 +42,16 @@ leer_sepe_csv <- function(ruta) {
 
 # MAPEO DE COMUNIDADES AUTONOMAS
 
-mapa_ca <- tibble::tibble(
-  cod_ca = c("01","02","03","04","05","06","07","08","09","10",
-             "11","12","13","14","15","16","17","18","19"),
-  ca = c(
-    "Andalucía","Aragón","Asturias","Illes Balears","Canarias",
-    "Cantabria","Castilla y León","Castilla-La Mancha","Cataluña",
-    "Comunitat Valenciana","Extremadura","Galicia","Madrid",
-    "Murcia","Navarra","País Vasco","La Rioja","Ceuta","Melilla"
-  )
-)
+# mapa_ca <- tibble::tibble(
+#   cod_ca = c("01","02","03","04","05","06","07","08","09","10",
+#              "11","12","13","14","15","16","17","18","19"),
+#   ca = c(
+#     "Andalucía","Aragón","Asturias","Illes Balears","Canarias",
+#     "Cantabria","Castilla y León","Castilla-La Mancha","Cataluña",
+#     "Comunitat Valenciana","Extremadura","Galicia","Madrid",
+#     "Murcia","Navarra","País Vasco","La Rioja","Ceuta","Melilla"
+#   )
+# )
 
 
 
@@ -68,7 +68,7 @@ ui <- fluidPage(
     # PANEL DONDE ESTAN LOS CONTROLES
     sidebarPanel(
       h4("Configuración Global"),
-      
+      condition = "input.tabs_main != 'tab_relacion'",
       selectInput("metrica_sel", "Indicador:",
                   choices = c("Paro Registrado" = "paro",
                               "Contratos Registrados" = "contratos",
@@ -116,12 +116,13 @@ ui <- fluidPage(
         helpText("Nota: El valor relativo (%) se calcula sobre la POBLACIÓN TOTAL de la provincia.")
       ),
 
+
       # --- FILTROS PESTAÑA 3 COMPARACION CONTRATOS-PARO ---
       conditionalPanel(
         condition = "input.tabs_main == 'tab_relacion'",
         h4("Filtros Relación Paro–Contratos"),
-        selectInput("ccaa_rel","Comunidad Autónoma",choices = c("Todas" = "ALL",setNames(mapa_ca$cod_ca, mapa_ca$ca)),selected = "ALL"),
-        # selectInput("ccaa_rel", "Comunidad Autónoma:", choices = NULL),
+        # En el sidebarPanel, dentro del conditionalPanel de 'tab_relacion'
+        selectInput("ccaa_rel", "Comunidad Autónoma:", choices = NULL),
         selectInput("sector_rel", "Sector:", choices = c("Agricultura", "Industria", "Construcción", "Servicios")),
         sliderInput("desfase_anios", "Desfase entre Paro y Contratos (años):", min = 0, max = 5, value = 1, step = 1)
       ),
@@ -180,7 +181,6 @@ ui <- fluidPage(
             plotOutput("plot_des_comp", height = "300px")   
         ),
 
-        # Busca donde termina el último tabPanel de "Desigualdades Demográficas" y añade:
         tabPanel(
             "Explorador de Datos", value = "tab_tabla",
             br(),
@@ -233,46 +233,7 @@ server <- function(input, output, session) {
   
 
 
-  # --- 2. Carga de datos CONTRATOS/PARO/ ---
-#   agregador_sectores_provincial <- function(df_raw, tipo_metrica) {
-#     if (is.null(df_raw) || nrow(df_raw) == 0) return(NULL)
-#     names(df_raw) <- gsub("\\s+", " ", names(df_raw)) 
-    
-#     if ("Cod mes" %in% names(df_raw)) {
-#       df_raw$mes_cod <- as.character(df_raw$`Cod mes`)
-#       df_raw$anio <- suppressWarnings(as.integer(substr(df_raw$mes_cod, 1, 4)))
-#       df_raw$mes  <- suppressWarnings(as.integer(substr(df_raw$mes_cod, 5, 6)))
-#     } else { return(NULL) }
-    
-#     if (!("Provincia" %in% names(df_raw))) return(NULL)
-#     if ("Cod provincia" %in% names(df_raw)) {
-#        df_raw$cod_prov <- as.integer(df_raw$`Cod provincia`)
-#     } else { df_raw$cod_prov <- NA }
 
-#     prefix <- switch(tipo_metrica,
-#       "paro" = "Paro", "contratos" = "Contratos", "dtes" = "Dtes Empleo"
-#     )
-    
-#     sectores_sufijos <- c("Agricultura", "Industria", "Construcción", "Servicios")
-#     if (tipo_metrica != "contratos") sectores_sufijos <- c(sectores_sufijos, "Sin empleo Anterior")
-    
-#     df_grouped <- df_raw %>% 
-#       filter(!is.na(anio)) %>%
-#       group_by(anio, mes, cod_prov, Provincia) 
-    
-#     lista_sectores <- list()
-#     for (sufijo in sectores_sufijos) {
-#       col_name <- paste(prefix, sufijo)
-#       if (!(col_name %in% names(df_raw))) {
-#          col_name_pegado <- paste0(prefix, sufijo)
-#          if (col_name_pegado %in% names(df_raw)) col_name <- col_name_pegado else next
-#       }
-#       temp <- df_grouped %>% summarise(valor = sum(.data[[col_name]], na.rm = TRUE), .groups = "drop")
-#       temp$sector <- sufijo
-#       lista_sectores[[sufijo]] <- temp
-#     }
-#     if (length(lista_sectores) > 0) bind_rows(lista_sectores) else NULL
-#   }
   
 
 
@@ -322,7 +283,7 @@ server <- function(input, output, session) {
 
         # --- PASO CLAVE: PASO A FORMATO LARGO ---
         df_largo <- df_raw %>%
-            select(anio, mes, cod_prov, Provincia, all_of(cols_interes)) %>%
+            select(anio, mes, cod_prov, Provincia, `Comunidad Aut`, all_of(cols_interes)) %>%
             pivot_longer(
                 cols = all_of(cols_interes),
                 names_to = "variable",
@@ -368,7 +329,7 @@ server <- function(input, output, session) {
 
         # --- Agregación mínima ---
         df_largo %>%
-            group_by(anio, mes, cod_prov, Provincia,
+            group_by(anio, mes, cod_prov, Provincia, `Comunidad Aut`,
                     tipo, sector, genero, edad, es_total) %>%
             summarise(valor = sum(valor, na.rm = TRUE), .groups = "drop")
     
@@ -377,30 +338,8 @@ server <- function(input, output, session) {
 
 
 
-### REACTIVE PARA FILTRAR POR EDAD/GENERO
 
-    # datos_desigualdad <- reactive({
-    #     req(input$prov1, input$metrica_des, input$grupo_des)
-    #     df <- datos_base()
-    #     req(df)
-    
-    # # Filtramos por provincia y métrica (paro o contratos)
-    #     df <- df %>%
-    #         filter(
-    #             Provincia == input$prov1,
-    #             metrica == tolower(input$metrica_des)  # Convertimos "Paro" -> "paro"
-    #         )
-    
-    # # Filtrar según las variables demográficas seleccionadas
-    # if("Edad" %in% input$grupo_des){
-    #     df <- df %>% filter(!is.na(edad))
-    # }
-    # if("Género" %in% input$grupo_des){
-    #     df <- df %>% filter(!is.na(genero))
-    # }
-    
-    # df
-    # })
+
 
 
     # --- Datos Desigualdades ---
@@ -495,6 +434,27 @@ server <- function(input, output, session) {
     updateSelectInput(session, "prov1", choices = provs, selected = sel_def)
     updateSelectInput(session, "prov2", choices = c("Ninguna" = "", provs), selected = "")
   })
+
+  observe({
+      df <- datos_base()
+      req(df)
+
+      comunidades <- sort(unique(df$`Comunidad Aut`))
+
+      updateSelectInput(
+          session, "ccaa_rel",
+          choices = c("Todas" = "ALL", comunidades),
+          selected = "ALL"
+      )
+  })
+
+
+
+
+
+
+
+
   
   # --- UI DINÁMICA: SLIDER MAPA ---
   output$ui_slider_mapa_dinamico <- renderUI({
@@ -772,6 +732,7 @@ server <- function(input, output, session) {
 
 
 
+
 ##########################################################
 ## ===IDIOM TABLA 
 ##########################################################
@@ -811,7 +772,7 @@ server <- function(input, output, session) {
 
     df %>%
         filter(metrica == "paro") %>%
-        group_by(anio, cod_prov, Provincia, sector) %>% # un unico valor por año, provincia y sector
+        group_by(anio, cod_prov, Provincia,`Comunidad Aut`, sector) %>% # un unico valor por año, provincia y sector
         summarise(
             paro_t = mean(valor, na.rm = TRUE), # media de paro en una provincia, en un año, en un sector
             .groups = "drop" # devuelve el dataframe normal
@@ -825,11 +786,12 @@ server <- function(input, output, session) {
     req(df)
   
   # ⚠️ k fijo de momento (luego será input)
-    k <- 1
+    # k <- 1
+    k <- as.numeric(input$desfase_anios)
   
     df %>%
       filter(metrica == "contratos") %>% #
-      group_by(anio, cod_prov, Provincia, sector) %>%
+      group_by(anio, cod_prov, Provincia, `Comunidad Aut`, sector) %>%
       summarise(
         contratos = sum(valor, na.rm = TRUE), # suma del nº contratos en una provincia, en un año, en un sector.
         .groups = "drop"
@@ -854,6 +816,7 @@ server <- function(input, output, session) {
       filter(!is.na(paro_t), !is.na(contratos))
   })
 
+
 # =====================================================
 # === VISUALIZACION RELACION PARO vs CONTRATOS ==========
 # =====================================================
@@ -861,30 +824,29 @@ server <- function(input, output, session) {
 # Reactive filtrado según CCAA, sector y desfase
 
   datos_relacion_filtrados <- reactive({
+
     df <- datos_relacion_paro_contratos()
     req(df)
 
-      if (input$ccaa_rel != "ALL") {
-          df <- df %>% filter(`Cod CA` == input$ccaa_rel)
-      }
+    # ---- 1) Filtro por CCAA ----
+    if (input$ccaa_rel != "ALL") {
+      df <- df %>% filter(`Comunidad Aut` == input$ccaa_rel)
+    }
 
-  
-  # 2. Filtrar sector
+    # ---- 2) Filtro por sector ----
     if (!is.null(input$sector_rel) && input$sector_rel != "") {
       df <- df %>% filter(sector == input$sector_rel)
     }
-    
-    df
 
-
+    # ---- 3) Normalización con población ----
     df_pob <- poblacion_data()
     req(df_pob)
 
     df <- df %>%
       left_join(df_pob, by = c("cod_prov", "anio")) %>%
       mutate(
-        paro_rate = paro_t / poblacion_total * 1000,
-        contratos_rate = contratos / poblacion_total * 1000
+        paro_rate       = paro_t   / poblacion_total * 1000,
+        contratos_rate  = contratos / poblacion_total * 1000
       ) %>%
       filter(
         !is.na(paro_rate),
@@ -893,37 +855,31 @@ server <- function(input, output, session) {
         is.finite(contratos_rate)
       )
 
+    df   # <-- ESTE SÍ ES EL RETURN CORRECTO
   })
 
-# Render del bubble chart
+
   output$plot_relacion <- renderPlot({
-    df <- datos_relacion_filtrados()
-    req(nrow(df) > 0)
+  df <- datos_relacion_filtrados()
+  req(nrow(df) > 0)
 
-      ggplot(df, aes(
-          x = paro_rate,
-          y = contratos_rate,
-          color = sector
-          )) +
-          geom_point(alpha = 0.7) +
-          geom_smooth(method = "lm", se = FALSE, linewidth = 1) +
-          theme_minimal(base_size = 16) +
-          labs(
-              x = "Paro por 1.000 habitantes (t)",
-              y = paste0("Contratos por 1.000 habitantes (t + ", input$desfase_anios, ")"),
-              color = "Sector",
-              title = paste(
-              "Relación paro–contratación normalizada —",
-              ifelse(input$ccaa_rel == "", "Todas las CCAA", input$ccaa_rel)
-              )
-          ) +
-          theme(
-              legend.position = "bottom",
-              plot.title = element_text(size = 20, face = "bold", hjust = 0.5)
-          )
-
+  ggplot(df, aes(x = paro_rate, y = contratos_rate)) +
+    geom_point(aes(color = sector), alpha = 0.6, size = 3) +
+    geom_smooth(method = "lm", color = "black", linetype = "dashed", se = FALSE) +
+    # ZOOM AUTOMÁTICO: Ignora el 1% de datos extremos para que no se vea "aplastado"
+    coord_cartesian(
+      xlim = c(0, quantile(df$paro_rate, 0.99, na.rm = TRUE)),
+      ylim = c(0, quantile(df$contratos_rate, 0.99, na.rm = TRUE))
+    ) +
+    theme_minimal(base_size = 16) +
+    labs(
+      x = "Paro por 1.000 habitantes (Año t)",
+      y = paste0("Contratos por 1.000 hab. (Año t + ", input$desfase_anios, ")"),
+      title = paste("Relación Normalizada —", input$ccaa_rel)
+    )
   })
 
+    
 
 
 ##########################################################
@@ -968,21 +924,40 @@ server <- function(input, output, session) {
   })
 
 
-  output$plot_des_comp <- renderPlot({
-    df <- datos_desigualdad() %>%
-      group_by(fecha, edad) %>%
-      summarise(valor=sum(valor, na.rm=TRUE), .groups="drop") %>%
-      group_by(fecha) %>%
-      mutate(porcentaje = valor / sum(valor) * 100)
+  # output$plot_des_comp <- renderPlot({
+  #   df <- datos_desigualdad() %>%
+  #     group_by(fecha, edad) %>%
+  #     summarise(valor=sum(valor, na.rm=TRUE), .groups="drop") %>%
+  #     group_by(fecha) %>%
+  #     mutate(porcentaje = valor / sum(valor) * 100)
   
-    ggplot(df, aes(x=fecha, y=porcentaje, fill=edad)) +
-      geom_area() +
-      labs(
-        title=paste("Composición porcentual por edad —", input$prov1),
-        x=NULL, y="%"
-      ) +
-      theme_minimal(base_size = 14)
+  #   ggplot(df, aes(x=fecha, y=porcentaje, fill=edad)) +
+  #     geom_area() +
+  #     labs(
+  #       title=paste("Composición porcentual por edad —", input$prov1),
+  #       x=NULL, y="%"
+  #     ) +
+  #     theme_minimal(base_size = 14)
+  # })
+
+ 
+
+  output$debug_info <- renderPrint({
+    df <- datos_relacion_paro_contratos()
+    req(df)
+
+    cat("CCAA disponibles en la relación paro-contratos:\n")
+    print(unique(df$`Comunidad Aut`))
   })
+
+
+
+
+
+
+
+
+
 
 
 
