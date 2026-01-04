@@ -122,7 +122,7 @@ ui <- fluidPage(
                     choices = c("Ninguna" = "ninguna",
                                "Género" = "genero",
                                "Tipo de Contrato" = "tipo_contrato")),
-        sliderInput("desfase_anios", "Desfase entre Paro y Contratos (años):", 
+        sliderInput("desfase_anios", "Desfase entre Paro y Contratos (años):",
                     min = 0, max = 5, value = 1, step = 1),
         checkboxInput("normalizar_poblacion", "Normalizar por población", value = TRUE)
       ),
@@ -131,8 +131,8 @@ ui <- fluidPage(
         condition = "input.tabs_main == 'tab_desigualdades'",
         h4("Filtros Desigualdades Demográficas"),
         selectInput("ccaa_des", "Comunidad Autónoma:", choices = NULL),
-        selectInput("metrica_des", "Métrica:", choices = c("Paro", "Contratos")),
-        checkboxGroupInput("grupo_des", "Variables:", 
+        selectInput("prov1_des", "Provincia:", choices = NULL),
+        checkboxGroupInput("grupo_des", "Variables:",
                           choices = c("Edad", "Género", "Tipo de Contrato"), 
                           selected = c("Edad", "Género"))
       ),
@@ -171,14 +171,9 @@ ui <- fluidPage(
             value = "tab_desigualdades",
             br(),
             h3("Distribución y desigualdades del empleo"),
-            selectInput("prov1_des", "Provincia:", choices = NULL),
-            selectInput("metrica_des", "Métrica:", choices = c("Paro","Contratos")),
-            checkboxGroupInput("grupo_des", "Variables:", 
-                              choices = c("Edad","Género"), 
-                              selected = c("Edad","Género")),
             plotOutput("plot_des_sexo", height = "300px"),
             plotOutput("plot_des_edad", height = "300px"),
-            plotOutput("plot_des_comp", height = "300px")   
+            plotOutput("plot_des_comp", height = "300px")
         ),
 
         tabPanel(
@@ -442,8 +437,8 @@ server <- function(input, output, session) {
     if (input$granularidad == "anual") {
       df_agrupado <- df_filt %>%
         group_by(anio, Provincia, sector, metrica) %>%
-        summarise(valor = if(input$metrica_sel == "contratos") sum(valor, na.rm=TRUE) else mean(valor, na.rm=TRUE), 
-                 .groups = "drop")
+        summarise(valor = if(input$metrica_sel == "contratos") sum(valor, na.rm=TRUE) else mean(valor, na.rm=TRUE), .groups = "drop")
+      df_agrupado$fecha <- as.Date(paste0(df_agrupado$anio, "-01-01"))
     } else {
       df_agrupado <- df_filt 
     }
