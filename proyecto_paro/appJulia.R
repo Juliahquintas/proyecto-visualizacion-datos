@@ -23,6 +23,8 @@ res <- descargar_datasets_sepe(anios = anios, dir_data = "data")
 # Descargamos población (fundamental para el nuevo cálculo del mapa)
 res <- descargar_y_procesar_poblacion(codigos_ine = 2854:2908, dir_data = "data", anio_min = 2010, anio_max = 2025)
 
+
+### --------lEER LOS CSV Y CONVERTIRLOS EN UN DF-----------
 # Función de lectura ROBUSTA (Latin1)
 leer_sepe_csv <- function(ruta) {
   if(!file.exists(ruta)) return(NULL)
@@ -37,166 +39,294 @@ leer_sepe_csv <- function(ruta) {
   })
 }
 
-# MAPEO DE COMUNIDADES AUTONOMAS
-# mapa_ca <- tibble::tibble(
-#   cod_ca = c("01","02","03","04","05","06","07","08","09","10",
-#              "11","12","13","14","15","16","17","18","19"),
-#   ca = c(
-#     "Andalucía","Aragón","Asturias","Illes Balears","Canarias",
-#     "Cantabria","Castilla y León","Castilla-La Mancha","Cataluña",
-#     "Comunitat Valenciana","Extremadura","Galicia","Madrid",
-#     "Murcia","Navarra","País Vasco","La Rioja","Ceuta","Melilla"
-#   )
-# )
 
-###################################################################
-### UI (INTERFAZ DE USUARIO) ######
-###################################################################
+
+
+# ###################################################################
+# ### UI (INTERFAZ DE USUARIO) ######
+# ###################################################################
 
 ui <- fluidPage(
+
   useShinyjs(),
-  titlePanel(paste("SEPE — Análisis Provincial y Geográfico (", anios_titulos, ")")),
-  
-  sidebarLayout( 
-    
-    # PANEL DONDE ESTAN LOS CONTROLES
+
+  titlePanel(paste("SEPE Analytics — Empleo y Paro (", anios_titulos, ")")),
+
+  sidebarLayout(
+
+    # ----------- SIDEBAR (FILTROS) -----------
     sidebarPanel(
+      width = 3,
+
       h4("Configuración Global"),
-      selectInput("metrica_sel", "Indicador:",
-                  choices = c("Paro Registrado" = "paro",
-                              "Contratos Registrados" = "contratos",
-                              "Demandantes de Empleo" = "dtes"),
-                  selected = "contratos"),
-      
-      # --- FILTROS PESTAÑA 1 EVOLUCION TEMPORAL ---
+
+      selectInput(
+        "metrica_sel", "Indicador:",
+        choices = c(
+          "Paro Registrado" = "paro",
+          "Contratos Registrados" = "contratos",
+          "Demandantes de Empleo" = "dtes"
+        ),
+        selected = "contratos"
+      ),
+
+      # ---- PESTAÑA 1 ----
       conditionalPanel(
         condition = "input.tabs_main == 'tab_grafico'",
         h4("Filtros Evolución"),
-        selectInput("prov1", "Provincia Principal:", choices = NULL), 
+        selectInput("prov1", "Provincia Principal:", choices = NULL),
         selectInput("prov2", "Comparar con (Opcional):", choices = NULL),
-        
-        sliderInput("rango_anios", "Rango de Años:",
-                    min = min(anios), max = max(anios),
-                    value = c(min(anios), max(anios)),
-                    step = 1, sep = ""),
-        
-        radioButtons("granularidad", "Escala Temporal:",
-                     choices = c("Anual (Media)" = "anual", 
-                                 "Mensual (Detalle)" = "mensual"),
-                     selected = "mensual"),
-        
-        checkboxInput("relativo", "Ver distribución % (Áreas Apiladas)", value = FALSE)
+
+        sliderInput(
+          "rango_anios", "Rango de Años:",
+          min = min(anios), max = max(anios),
+          value = c(min(anios), max(anios)),
+          step = 1, sep = ""
+        ),
+
+        radioButtons(
+          "granularidad", "Escala Temporal:",
+          choices = c(
+            "Anual (Media)" = "anual",
+            "Mensual (Detalle)" = "mensual"
+          ),
+          selected = "mensual"
+        ),
+
+        checkboxInput("relativo", "Ver distribución % (Áreas Apiladas)", FALSE)
       ),
-      
-      # --- FILTROS PESTAÑA 2 MAPA ---
+
+      # ---- PESTAÑA 2 ----
       conditionalPanel(
         condition = "input.tabs_main == 'tab_mapa'",
         h4("Filtros Mapa"),
-        
-        # 1. Granularidad propia del mapa
-        radioButtons("granularidad_mapa", "Escala Temporal:",
-                     choices = c("Anual" = "anual", 
-                                 "Mensual" = "mensual"),
-                     selected = "anual"),
-        
-        # 2. Slider Dinámico (Anual o Mensual con Play)
+
+        radioButtons(
+          "granularidad_mapa", "Escala Temporal:",
+          choices = c("Anual" = "anual", "Mensual" = "mensual"),
+          selected = "anual"
+        ),
+
         uiOutput("ui_slider_mapa_dinamico"),
-        
-        selectInput("sector_mapa", "Sector a visualizar:", 
-                    choices = c("Agricultura", "Industria", "Construcción", "Servicios", "Sin empleo Anterior"),
-                    selected = "Servicios"),
-        
-        helpText("Nota: El valor relativo (%) se calcula sobre la POBLACIÓN TOTAL de la provincia.")
+
+        selectInput(
+          "sector_mapa", "Sector a visualizar:",
+          choices = c(
+            "Agricultura", "Industria", "Construcción",
+            "Servicios", "Sin empleo Anterior"
+          ),
+          selected = "Servicios"
+        ),
+
+        helpText(
+          "Nota: El valor relativo (%) se calcula sobre la POBLACIÓN TOTAL de la provincia."
+        )
       ),
 
-      # --- FILTROS PESTAÑA 3 COMPARACION CONTRATOS-PARO ---
+      # ---- PESTAÑA 3 ----
       conditionalPanel(
         condition = "input.tabs_main == 'tab_relacion'",
         h4("Filtros Relación Paro–Contratos"),
+
         selectInput("ccaa_rel", "Comunidad Autónoma:", choices = NULL),
-        selectInput("sector_rel", "Sector:", 
-                    choices = c("Todos" = "Todos", 
-                               "Agricultura", "Industria", 
-                               "Construcción", "Servicios")),
-        selectInput("dimension_rel", "Dimensión adicional:",
-                    choices = c("Ninguna" = "ninguna",
-                               "Género" = "genero",
-                               "Tipo de Contrato" = "tipo_contrato")),
-        sliderInput("desfase_anios", "Desfase entre Paro y Contratos (años):", 
-                    min = 0, max = 5, value = 1, step = 1),
-        checkboxInput("normalizar_poblacion", "Normalizar por población", value = TRUE)
+
+        selectInput(
+          "sector_rel", "Sector:",
+          choices = c("Todos", "Agricultura", "Industria", "Construcción", "Servicios")
+        ),
+
+        selectInput(
+          "dimension_rel", "Dimensión adicional:",
+          choices = c(
+            "Ninguna" = "ninguna",
+            "Género" = "genero",
+            "Tipo de Contrato" = "tipo_contrato"
+          )
+        ),
+
+        sliderInput(
+          "desfase_anios", "Desfase (años):",
+          min = 0, max = 5, value = 1, step = 1
+        ),
+
+        checkboxInput("normalizar_poblacion", "Normalizar por población", TRUE)
       ),
 
+      # ---- PESTAÑA 4 ----
       conditionalPanel(
         condition = "input.tabs_main == 'tab_desigualdades'",
-        h4("Filtros Desigualdades Demográficas"),
-        selectInput("ccaa_des", "Comunidad Autónoma:", choices = NULL),
-        selectInput("metrica_des", "Métrica:", choices = c("Paro", "Contratos")),
-        checkboxGroupInput("grupo_des", "Variables:", 
-                          choices = c("Edad", "Género", "Tipo de Contrato"), 
-                          selected = c("Edad", "Género"))
-      ),
-      width = 3
-    ),
-    
-    # PANEL PRINCIPAL, DONDE ESTAN LAS VISUALIZACIONES
-    mainPanel(
-      tabsetPanel(id = "tabs_main",
-                  
-        tabPanel("Evolución Temporal", value = "tab_grafico",
-                 br(),
-                 h3(textOutput("titulo_grafico")),
-                 plotOutput("plot_sectores", height = "600px")
+        h4("Configuración Desigualdades"),
+
+        radioButtons(
+          "tipo_analisis_des", "Tipo de Análisis:",
+          choices = c(
+            "Brecha de Género" = "genero",
+            "Tipo de Contrato" = "contrato",
+            "Distribución por Edad" = "edad",
+            "Comparación Provincial" = "provincial",
+            "Evolución Temporal" = "temporal"
+          ),
+          selected = "genero"
         ),
-        
-        tabPanel("Mapa Geográfico", value = "tab_mapa",
-                 br(),
-                 h3(textOutput("titulo_mapa")),
-                 leafletOutput("mapa_leaflet", height = "650px")
+
+        selectInput("ccaa_des", "Comunidad Autónoma:", choices = NULL),
+
+        conditionalPanel(
+          condition = "input.tipo_analisis_des == 'genero' ||
+                       input.tipo_analisis_des == 'contrato' ||
+                       input.tipo_analisis_des == 'edad'",
+          selectInput(
+            "sector_des", "Sector:",
+            choices = c(
+              "Todos", "Agricultura", "Industria",
+              "Construcción", "Servicios", "Sin empleo Anterior"
+            ),
+            selected = "Todos"
+          )
+        ),
+
+        conditionalPanel(
+          condition = "input.tipo_analisis_des == 'provincial'",
+          radioButtons(
+            "metrica_prov", "Métrica a Comparar:",
+            choices = c(
+              "% Mujeres" = "pct_mujeres",
+              "Brecha de Género" = "brecha_genero",
+              "% Contratos Temporales" = "pct_temporales",
+              "% Jóvenes (<25)" = "pct_jovenes"
+            ),
+            selected = "brecha_genero"
+          )
+        ),
+
+        conditionalPanel(
+          condition = "input.tipo_analisis_des == 'temporal'",
+          selectInput("prov_temporal", "Provincia:", choices = NULL),
+          radioButtons(
+            "metrica_temporal", "Métrica:",
+            choices = c(
+              "Brecha de Género" = "brecha_genero",
+              "% Mujeres" = "pct_mujeres",
+              "% Contratos Temporales" = "pct_temporales",
+              "% Contratos Indefinidos" = "pct_indefinidos"
+            ),
+            selected = "brecha_genero"
+          )
+        ),
+
+        conditionalPanel(
+          condition = "input.tipo_analisis_des != 'temporal'",
+          sliderInput(
+            "anio_des", "Año:",
+            min = min(anios), max = max(anios),
+            value = max(anios), step = 1, sep = ""
+          )
+        ),
+
+        conditionalPanel(
+          condition = "input.tipo_analisis_des == 'temporal'",
+          sliderInput(
+            "rango_anios_des", "Rango de Años:",
+            min = min(anios), max = max(anios),
+            value = c(max(anios) - 5, max(anios)),
+            step = 1, sep = ""
+          )
+        )
+      )
+    ),
+
+    # ----------- MAIN PANEL (GRÁFICOS) -----------
+    mainPanel(
+      width = 9,
+
+      tabsetPanel(id = "tabs_main",
+
+        tabPanel(
+          "Evolución Temporal", value = "tab_grafico",
+          br(),
+          h3(textOutput("titulo_grafico")),
+          plotOutput("plot_sectores", height = "600px")
         ),
 
         tabPanel(
-          "Relación Paro–Contratos",
+          "Mapa Geográfico", value = "tab_mapa",
+          br(),
+          h3(textOutput("titulo_mapa")),
+          leafletOutput("mapa_leaflet", height = "650px")
+        ),
+
+        tabPanel(
+          "Relación Paro y Contratos los años posteriores",
           value = "tab_relacion",
           br(),
-          h3("Relación entre desempleo y contratación sectorial"),
-          p("Esta sección analiza la relación entre el nivel de desempleo en un sector"),
-          p("y la contratación generada en ese mismo sector en años posteriores."),
           plotOutput("plot_relacion", height = "600px"),
           uiOutput("estadisticas_relacion")
         ),
 
         tabPanel(
-            "Desigualdades Demográficas",
-            value = "tab_desigualdades",
-            br(),
-            h3("Distribución y desigualdades del empleo"),
-            selectInput("prov1_des", "Provincia:", choices = NULL),
-            selectInput("metrica_des", "Métrica:", choices = c("Paro","Contratos")),
-            checkboxGroupInput("grupo_des", "Variables:", 
-                              choices = c("Edad","Género"), 
-                              selected = c("Edad","Género")),
-            plotOutput("plot_des_sexo", height = "300px"),
-            plotOutput("plot_des_edad", height = "300px"),
-            plotOutput("plot_des_comp", height = "300px")   
+          "Desigualdades Demográficas",
+          value = "tab_desigualdades",
+          br(),
+          h3(textOutput("titulo_desigualdades")),
+
+          conditionalPanel(
+            condition = "input.tipo_analisis_des == 'genero'",
+            plotOutput("plot_brecha_barras", height = "600px"),
+            plotOutput("plot_brecha_sector", height = "400px")
+          ),
+
+          conditionalPanel(
+            condition = "input.tipo_analisis_des == 'contrato'",
+            plotOutput("plot_contrato_stacked", height = "500px"),
+            plotOutput("plot_contrato_temporal", height = "300px")
+          ),
+
+          conditionalPanel(
+            condition = "input.tipo_analisis_des == 'edad'",
+            plotOutput("plot_piramide_edad", height = "500px"),
+            plotOutput("plot_edad_provincia", height = "400px")
+          ),
+
+          conditionalPanel(
+            condition = "input.tipo_analisis_des == 'provincial'",
+            plotOutput("plot_heatmap_provincial", height = "600px"),
+            plotOutput("plot_top10_provincias", height = "400px")
+          ),
+
+          conditionalPanel(
+            condition = "input.tipo_analisis_des == 'temporal'",
+            plotOutput("plot_evolucion_temporal", height = "500px"),
+            plotOutput("plot_tendencia", height = "300px")
+          ),
+
+          wellPanel(
+            h4("Métricas Clave"),
+            uiOutput("metricas_resumen")
+          )
         ),
 
         tabPanel(
-            "Explorador de Datos", value = "tab_tabla",
-            br(),
-            h3("Tabla de Datos Brutos"),
-            p("Utiliza los cuadros de búsqueda bajo cada columna para filtrar los datos específicos."),
-            downloadButton("descargar_datos", "Descargar CSV"),
-            br(), br(),
-            DTOutput("tabla_maestra")
+          "Explorador de Datos", value = "tab_tabla",
+          br(),
+          h3("Tabla de Datos Brutos"),
+          downloadButton("descargar_datos", "Descargar CSV"),
+          br(), br(),
+          DTOutput("tabla_maestra")
         )
       ),
+
       br(),
-      verbatimTextOutput("debug_info"),
-      width = 9
+      verbatimTextOutput("debug_info")
     )
   )
 )
+
+
+
+
+
+
+
 
 ###################################################################
 ### SERVER (LÓGICA DE LA APP) ######
@@ -226,6 +356,8 @@ server <- function(input, output, session) {
       geo %>% mutate(cod_prov_int = as.integer(cpro))
     }, error = function(e) return(NULL))
   })
+
+
 
   agregador_sectores_provincial <- function(df_raw, tipo_metrica) {
     if (is.null(df_raw) || nrow(df_raw) == 0) return(NULL)
@@ -330,6 +462,7 @@ server <- function(input, output, session) {
       summarise(valor = sum(valor, na.rm = TRUE), .groups = "drop")
   }
 
+
   # --- 3. Carga de Datos Base ---
   datos_base <- reactive({
     lista_final <- list()
@@ -424,6 +557,19 @@ server <- function(input, output, session) {
                   animate = animationOptions(interval = 1000, loop = FALSE))
     }
   })
+
+
+  #########################################################
+  # Update para provincia temporal
+  observe({
+    df <- datos_base()
+    req(df)
+    provs <- sort(unique(df$Provincia))
+    sel_def <- if("Madrid" %in% provs) "Madrid" else provs[1]
+    updateSelectInput(session, "prov_temporal", choices = provs, selected = sel_def)
+  })
+
+
 
   # --- 4. Transformación Gráfico Lineal ---
   datos_grafico <- reactive({
@@ -669,6 +815,8 @@ server <- function(input, output, session) {
     )
   })
 
+
+
   ##########################################################
   ## === RELACIÓN PARO (t) vs CONTRATOS (t + k) 
   ##########################################################
@@ -765,6 +913,9 @@ server <- function(input, output, session) {
     return(df_relacion)
   })
 
+
+
+
   # 4. Gráfico de relación 
   output$plot_relacion <- renderPlot({
     df <- datos_relacion_filtrados()
@@ -849,93 +1000,501 @@ server <- function(input, output, session) {
   })
 
   ##########################################################
-  ## === DESIGUALDADES DEMOGRÁFICAS 
+  ## === DESIGUALDADES DEMOGRÁFICAS 1 
   ##########################################################
+
+  # --- Funciones Helper para Desigualdades ---
   
-  # Datos para desigualdades
-  datos_desigualdad <- reactive({
-    df <- datos_base()
+  # Función para calcular métricas de desigualdad
+  calcular_metricas_desigualdad <- function(df) {
     req(df)
     
-    # Filtrar por métrica seleccionada
-    metrica <- ifelse(input$metrica_des == "Paro", "paro", "contratos")
-    df <- df %>% filter(metrica == metrica)
+    # Calcular métricas básicas
+    df_metrics <- df %>%
+      group_by(Provincia, anio, sector, genero, edad, tipo_contrato) %>%
+      summarise(
+        valor_total = sum(valor, na.rm = TRUE),
+        .groups = "drop"
+      )
     
-    # Filtrar por CCAA si se ha seleccionado
+    # Métricas por género
+    genero_metrics <- df_metrics %>%
+      filter(genero %in% c("Hombre", "Mujer")) %>%
+      group_by(Provincia, anio, sector, genero) %>%
+      summarise(
+        valor_genero = sum(valor_total, na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      group_by(Provincia, anio, sector) %>%
+      summarise(
+        total = sum(valor_genero, na.rm = TRUE),
+        pct_hombres = ifelse(total > 0, 
+                           sum(valor_genero[genero == "Hombre"], na.rm = TRUE) / total * 100,
+                           0),
+        pct_mujeres = ifelse(total > 0,
+                           sum(valor_genero[genero == "Mujer"], na.rm = TRUE) / total * 100,
+                           0),
+        brecha_genero = pct_mujeres - pct_hombres,
+        .groups = "drop"
+      )
+    
+    # Métricas por tipo de contrato (solo para contratos)
+    contrato_metrics <- df_metrics %>%
+      filter(tipo_contrato %in% c("Temporal", "Indefinido", "Convertido")) %>%
+      group_by(Provincia, anio, sector, tipo_contrato) %>%
+      summarise(
+        valor_contrato = sum(valor_total, na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      group_by(Provincia, anio, sector) %>%
+      summarise(
+        total_contratos = sum(valor_contrato, na.rm = TRUE),
+        pct_temporales = ifelse(total_contratos > 0,
+                              sum(valor_contrato[tipo_contrato == "Temporal"], na.rm = TRUE) / total_contratos * 100,
+                              0),
+        pct_indefinidos = ifelse(total_contratos > 0,
+                               sum(valor_contrato[tipo_contrato == "Indefinido"], na.rm = TRUE) / total_contratos * 100,
+                               0),
+        pct_convertidos = ifelse(total_contratos > 0,
+                               sum(valor_contrato[tipo_contrato == "Convertido"], na.rm = TRUE) / total_contratos * 100,
+                               0),
+        .groups = "drop"
+      )
+    
+    # Métricas por edad
+    edad_metrics <- df_metrics %>%
+      filter(edad %in% c("<25", "25-44", "45+")) %>%
+      group_by(Provincia, anio, sector, edad) %>%
+      summarise(
+        valor_edad = sum(valor_total, na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      group_by(Provincia, anio, sector) %>%
+      summarise(
+        total_edad = sum(valor_edad, na.rm = TRUE),
+        pct_jovenes = ifelse(total_edad > 0,
+                           sum(valor_edad[edad == "<25"], na.rm = TRUE) / total_edad * 100,
+                           0),
+        pct_adultos = ifelse(total_edad > 0,
+                           sum(valor_edad[edad == "25-44"], na.rm = TRUE) / total_edad * 100,
+                           0),
+        pct_mayores = ifelse(total_edad > 0,
+                           sum(valor_edad[edad == "45+"], na.rm = TRUE) / total_edad * 100,
+                           0),
+        .groups = "drop"
+      )
+    
+    # Combinar todas las métricas
+    full_metrics <- genero_metrics %>%
+      left_join(contrato_metrics, by = c("Provincia", "anio", "sector")) %>%
+      left_join(edad_metrics, by = c("Provincia", "anio", "sector"))
+    
+    return(full_metrics)
+  }
+  
+  # Función para filtrar datos según selección
+  datos_desigualdades_filtrados <- reactive({
+    df <- datos_base()
+    req(df, input$tipo_analisis_des)
+    
+    # Filtrar por métrica (siempre usamos contratos para desigualdades)
+    df <- df %>% filter(metrica == "contratos")
+    
+    # Filtrar por CCAA
     if (!is.null(input$ccaa_des) && input$ccaa_des != "ALL") {
       df <- df %>% filter(`Comunidad Aut` == input$ccaa_des)
     }
     
-    # Filtrar por provincia
-    if (!is.null(input$prov1_des) && input$prov1_des != "") {
-      df <- df %>% filter(Provincia == input$prov1_des)
+    # Filtrar por sector (si aplica)
+    if (!is.null(input$sector_des) && input$sector_des != "Todos" &&
+        input$tipo_analisis_des %in% c("genero", "contrato", "edad")) {
+      df <- df %>% filter(sector == input$sector_des)
+    }
+    
+    # Filtrar por año (para análisis no temporales)
+    if (input$tipo_analisis_des != "temporal" && !is.null(input$anio_des)) {
+      df <- df %>% filter(anio == input$anio_des)
+    }
+    
+    # Filtrar por rango de años (para análisis temporal)
+    if (input$tipo_analisis_des == "temporal" && !is.null(input$rango_anios_des)) {
+      df <- df %>% filter(anio >= input$rango_anios_des[1],
+                         anio <= input$rango_anios_des[2])
+    }
+    
+    # Filtrar por provincia (para análisis temporal específico)
+    if (input$tipo_analisis_des == "temporal" && !is.null(input$prov_temporal)) {
+      df <- df %>% filter(Provincia == input$prov_temporal)
     }
     
     return(df)
   })
 
-  output$plot_des_sexo <- renderPlot({
-    req("Género" %in% input$grupo_des)
+
+
+  output$titulo_desigualdades <- renderText({
+    tipo <- switch(input$tipo_analisis_des,
+                  "genero" = "Brecha de Género",
+                  "contrato" = "Tipo de Contrato",
+                  "edad" = "Distribución por Edad",
+                  "provincial" = "Comparación Provincial",
+                  "temporal" = "Evolución Temporal")
     
-    df <- datos_desigualdad() %>%
-      filter(genero %in% c("Hombre", "Mujer")) %>%
-      group_by(fecha, genero, sector) %>%
-      summarise(valor = sum(valor, na.rm=TRUE), .groups="drop")
-    
-    ggplot(df, aes(x=fecha, y=valor, color=genero)) +
-      geom_line(size=1.2) +
-      facet_wrap(~sector, scales="free_y") +
-      labs(
-        title=paste("Evolución por sexo —", 
-                   ifelse(is.null(input$prov1_des) || input$prov1_des == "", 
-                          input$ccaa_des, input$prov1_des)),
-        x=NULL, y="Total"
-      ) +
-      theme_minimal(base_size = 14)
+    if (input$tipo_analisis_des == "temporal") {
+      paste0("Análisis de Desigualdades: ", tipo, " (", 
+             input$rango_anios_des[1], "-", input$rango_anios_des[2], ")")
+    } else {
+      paste0("Análisis de Desigualdades: ", tipo, " (Año ", input$anio_des, ")")
+    }
   })
 
-  output$plot_des_edad <- renderPlot({
-    req("Edad" %in% input$grupo_des)
-    
-    df <- datos_desigualdad() %>%
-      filter(!edad %in% c("Total")) %>%
-      group_by(fecha, edad, sector) %>%
-      summarise(valor = sum(valor, na.rm=TRUE), .groups="drop")
-    
-    ggplot(df, aes(x=fecha, y=valor, color=edad)) +
-      geom_line(size=1.2) +
-      facet_wrap(~sector, scales="free_y") +
-      labs(
-        title=paste("Evolución por edad —", 
-                   ifelse(is.null(input$prov1_des) || input$prov1_des == "", 
-                          input$ccaa_des, input$prov1_des)),
-        x=NULL, y="Total"
-      ) +
-      theme_minimal(base_size = 14)
-  })
 
-  output$plot_des_comp <- renderPlot({
-    df <- datos_desigualdad() %>%
-      group_by(fecha, edad) %>%
-      summarise(valor=sum(valor, na.rm=TRUE), .groups="drop") %>%
-      group_by(fecha) %>%
-      mutate(porcentaje = valor / sum(valor) * 100)
+    # 1. Barras divergentes para brecha de género
+  output$plot_brecha_barras <- renderPlot({
+    df <- datos_desigualdades_filtrados()
+    metrics <- calcular_metricas_desigualdad(df)
     
-    ggplot(df, aes(x=fecha, y=porcentaje, fill=edad)) +
-      geom_area() +
-      labs(
-        title=paste("Composición porcentual por edad —", 
-                   ifelse(is.null(input$prov1_des) || input$prov1_des == "", 
-                          input$ccaa_des, input$prov1_des)),
-        x=NULL, y="%"
-      ) +
-      theme_minimal(base_size = 14)
+    # Preparar datos para gráfico de barras divergentes
+    plot_data <- metrics %>%
+      arrange(brecha_genero) %>%
+      mutate(Provincia = factor(Provincia, levels = Provincia))
+    
+    ggplot(plot_data, aes(x = Provincia)) +
+      geom_segment(aes(xend = Provincia, y = 0, yend = brecha_genero,
+                      color = ifelse(brecha_genero > 0, "Mujeres", "Hombres")),
+                  size = 2) +
+      geom_point(aes(y = brecha_genero, 
+                    color = ifelse(brecha_genero > 0, "Mujeres", "Hombres")),
+                size = 4) +
+      geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+      scale_color_manual(values = c("Hombres" = "#FF6B6B", "Mujeres" = "#4ECDC4")) +
+      coord_flip() +
+      labs(x = NULL, y = "Brecha de Género (% Mujeres - % Hombres)",
+          title = "Brecha de Género por Provincia",
+          subtitle = "Valores positivos = Mayor % de mujeres") +
+      theme_minimal(base_size = 14) +
+      theme(legend.position = "bottom",
+            legend.title = element_blank(),
+            plot.title = element_text(face = "bold", size = 16))
   })
+  
+  # 2. Gráfico de barras apiladas 100% para tipo de contrato
+  output$plot_contrato_stacked <- renderPlot({
+    df <- datos_desigualdades_filtrados()
+    metrics <- calcular_metricas_desigualdad(df)
+    
+    # Preparar datos para stacked bars
+    plot_data <- metrics %>%
+      select(Provincia, pct_temporales, pct_indefinidos, pct_convertidos) %>%
+      pivot_longer(cols = starts_with("pct_"),
+                  names_to = "tipo",
+                  values_to = "porcentaje") %>%
+      mutate(tipo = gsub("pct_", "", tipo),
+            tipo = factor(tipo, levels = c("temporales", "indefinidos", "convertidos")))
+    
+    ggplot(plot_data, aes(x = Provincia, y = porcentaje, fill = tipo)) +
+      geom_bar(stat = "identity", position = "fill") +
+      scale_fill_brewer(palette = "Set2", 
+                       labels = c("Temporales", "Indefinidos", "Convertidos")) +
+      scale_y_continuous(labels = scales::percent_format()) +
+      coord_flip() +
+      labs(x = NULL, y = "Proporción",
+          title = "Composición por Tipo de Contrato",
+          fill = "Tipo de Contrato") +
+      theme_minimal(base_size = 14) +
+      theme(legend.position = "bottom")
+  })
+  
+  # 3. Pirámide poblacional por edad
+  output$plot_piramide_edad <- renderPlot({
+    df <- datos_desigualdades_filtrados()
+    
+    # Preparar datos para pirámide
+    piramide_data <- df %>%
+      filter(genero %in% c("Hombre", "Mujer"),
+            edad %in% c("<25", "25-44", "45+")) %>%
+      group_by(genero, edad) %>%
+      summarise(valor = sum(valor, na.rm = TRUE), .groups = "drop") %>%
+      group_by(genero) %>%
+      mutate(pct = valor / sum(valor) * 100) %>%
+      mutate(valor_pyramid = ifelse(genero == "Hombre", -pct, pct))
+    
+    ggplot(piramide_data, aes(x = edad, y = valor_pyramid, fill = genero)) +
+      geom_bar(stat = "identity", alpha = 0.8) +
+      geom_text(aes(label = paste0(round(abs(valor_pyramid), 1), "%")),
+                position = position_stack(vjust = 0.5),
+                color = "white", fontface = "bold") +
+      coord_flip() +
+      scale_fill_manual(values = c("Hombre" = "#3498db", "Mujer" = "#e74c3c")) +
+      scale_y_continuous(labels = function(x) paste0(abs(x), "%"),
+                        limits = max(abs(piramide_data$valor_pyramid)) * c(-1.1, 1.1)) +
+      labs(x = "Grupo de Edad", y = "Porcentaje",
+          title = "Pirámide Poblacional por Edad y Género",
+          fill = "Género") +
+      theme_minimal(base_size = 14) +
+      theme(legend.position = "bottom")
+  })
+  
+  # 4. Heatmap provincial
+  output$plot_heatmap_provincial <- renderPlot({
+    df <- datos_desigualdades_filtrados()
+    metrics <- calcular_metricas_desigualdad(df)
+    
+    # Seleccionar métrica según input
+    metrica_seleccionada <- switch(input$metrica_prov,
+                                  "pct_mujeres" = metrics$pct_mujeres,
+                                  "brecha_genero" = metrics$brecha_genero,
+                                  "pct_temporales" = metrics$pct_temporales,
+                                  "pct_jovenes" = metrics$pct_jovenes)
+    
+    plot_data <- metrics %>%
+      mutate(valor_heatmap = metrica_seleccionada) %>%
+      arrange(desc(valor_heatmap))
+    
+    ggplot(plot_data, aes(x = Provincia, y = sector, fill = valor_heatmap)) +
+      geom_tile(color = "white", size = 0.5) +
+      scale_fill_gradient2(low = "#2166ac", mid = "#f7f7f7", high = "#b2182b",
+                          midpoint = median(plot_data$valor_heatmap, na.rm = TRUE),
+                          name = "Valor") +
+      geom_text(aes(label = round(valor_heatmap, 1)), 
+                color = "black", size = 3) +
+      coord_flip() +
+      labs(x = NULL, y = NULL,
+          title = paste("Mapa de Calor:", 
+                       switch(input$metrica_prov,
+                              "pct_mujeres" = "% Mujeres",
+                              "brecha_genero" = "Brecha de Género",
+                              "pct_temporales" = "% Contratos Temporales",
+                              "pct_jovenes" = "% Jóvenes (<25)"))) +
+      theme_minimal(base_size = 12) +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  })
+  
+  # 5. Evolución temporal
+  output$plot_evolucion_temporal <- renderPlot({
+    df <- datos_desigualdades_filtrados()
+    metrics <- calcular_metricas_desigualdad(df)
+    
+    # Seleccionar métrica según input
+    metrica_col <- switch(input$metrica_temporal,
+                         "brecha_genero" = "brecha_genero",
+                         "pct_mujeres" = "pct_mujeres",
+                         "pct_temporales" = "pct_temporales",
+                         "pct_indefinidos" = "pct_indefinidos")
+    
+    plot_data <- metrics %>%
+      group_by(anio) %>%
+      summarise(valor = mean(.data[[metrica_col]], na.rm = TRUE),
+               .groups = "drop")
+    
+    ggplot(plot_data, aes(x = anio, y = valor)) +
+      geom_line(size = 1.5, color = "#2c3e50") +
+      geom_point(size = 3, color = "#e74c3c") +
+      geom_smooth(method = "loess", se = FALSE, color = "#3498db", linetype = "dashed") +
+      labs(x = "Año", y = switch(input$metrica_temporal,
+                                 "brecha_genero" = "Brecha de Género",
+                                 "pct_mujeres" = "% Mujeres",
+                                 "pct_temporales" = "% Contratos Temporales",
+                                 "pct_indefinidos" = "% Contratos Indefinidos"),
+          title = paste("Evolución Temporal:", 
+                       switch(input$metrica_temporal,
+                              "brecha_genero" = "Brecha de Género",
+                              "pct_mujeres" = "Porcentaje de Mujeres",
+                              "pct_temporales" = "Contratos Temporales",
+                              "pct_indefinidos" = "Contratos Indefinidos"))) +
+      theme_minimal(base_size = 14) +
+      theme(plot.title = element_text(face = "bold", size = 16))
+  })
+  
+  # 6. Gráficos adicionales (ejemplos)
+  output$plot_brecha_sector <- renderPlot({
+    df <- datos_desigualdades_filtrados()
+    metrics <- calcular_metricas_desigualdad(df)
+    
+    ggplot(metrics, aes(x = sector, y = brecha_genero, fill = sector)) +
+      geom_boxplot(alpha = 0.7) +
+      geom_jitter(width = 0.2, alpha = 0.5) +
+      scale_fill_brewer(palette = "Set3") +
+      labs(x = NULL, y = "Brecha de Género",
+          title = "Distribución de la Brecha por Sector") +
+      theme_minimal(base_size = 14) +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  })
+  
+  output$plot_top10_provincias <- renderPlot({
+    df <- datos_desigualdades_filtrados()
+    metrics <- calcular_metricas_desigualdad(df)
+    
+    # Seleccionar métrica
+    metrica_top <- switch(input$metrica_prov,
+                         "pct_mujeres" = "pct_mujeres",
+                         "brecha_genero" = "brecha_genero",
+                         "pct_temporales" = "pct_temporales",
+                         "pct_jovenes" = "pct_jovenes")
+    
+    top_data <- metrics %>%
+      group_by(Provincia) %>%
+      summarise(valor = mean(.data[[metrica_top]], na.rm = TRUE)) %>%
+      arrange(desc(valor)) %>%
+      head(10)
+    
+    ggplot(top_data, aes(x = reorder(Provincia, valor), y = valor, fill = Provincia)) +
+      geom_bar(stat = "identity") +
+      geom_text(aes(label = round(valor, 1)), hjust = -0.2) +
+      scale_fill_viridis_d() +
+      coord_flip() +
+      labs(x = NULL, y = "Valor",
+          title = paste("Top 10 Provincias -",
+                       switch(input$metrica_prov,
+                              "pct_mujeres" = "% Mujeres",
+                              "brecha_genero" = "Brecha de Género",
+                              "pct_temporales" = "% Contratos Temporales",
+                              "pct_jovenes" = "% Jóvenes"))) +
+      theme_minimal(base_size = 14) +
+      theme(legend.position = "none")
+  })
+  
+  # 7. Panel de métricas resumen
+  output$metricas_resumen <- renderUI({
+    df <- datos_desigualdades_filtrados()
+    metrics <- calcular_metricas_desigualdad(df)
+    
+    # Calcular estadísticas resumen
+    if (nrow(metrics) > 0) {
+      stats <- list(
+        "Número de observaciones" = nrow(metrics),
+        "Brecha de género media" = paste0(round(mean(metrics$brecha_genero, na.rm = TRUE), 2), "%"),
+        "% Mujeres medio" = paste0(round(mean(metrics$pct_mujeres, na.rm = TRUE), 2), "%"),
+        "% Contratos temporales" = paste0(round(mean(metrics$pct_temporales, na.rm = TRUE), 2), "%"),
+        "% Jóvenes (<25)" = paste0(round(mean(metrics$pct_jovenes, na.rm = TRUE), 2), "%")
+      )
+      
+      # Crear lista de métricas
+      tagList(
+        lapply(names(stats), function(nom) {
+          tags$div(
+            style = "margin-bottom: 8px;",
+            tags$strong(paste0(nom, ": ")),
+            tags$span(stats[[nom]])
+          )
+        })
+      )
+    } else {
+      tags$p("No hay datos disponibles para las selecciones actuales.")
+    }
+  })
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ##########################################################
+  ## === DESIGUALDADES DEMOGRÁFICAS 
+  ##########################################################
+  
+  # Datos para desigualdades
+  # datos_desigualdad <- reactive({
+  #   df <- datos_base()
+  #   req(df)
+    
+  #   # Filtrar por métrica seleccionada
+  #   metrica <- ifelse(input$metrica_des == "Paro", "paro", "contratos")
+  #   df <- df %>% filter(metrica == metrica)
+    
+  #   # Filtrar por CCAA si se ha seleccionado
+  #   if (!is.null(input$ccaa_des) && input$ccaa_des != "ALL") {
+  #     df <- df %>% filter(`Comunidad Aut` == input$ccaa_des)
+  #   }
+    
+  #   # Filtrar por provincia
+  #   if (!is.null(input$prov1_des) && input$prov1_des != "") {
+  #     df <- df %>% filter(Provincia == input$prov1_des)
+  #   }
+    
+  #   return(df)
+  # })
+
+  # output$plot_des_sexo <- renderPlot({
+  #   req("Género" %in% input$grupo_des)
+    
+  #   df <- datos_desigualdad() %>%
+  #     filter(genero %in% c("Hombre", "Mujer")) %>%
+  #     group_by(fecha, genero, sector) %>%
+  #     summarise(valor = sum(valor, na.rm=TRUE), .groups="drop")
+    
+  #   ggplot(df, aes(x=fecha, y=valor, color=genero)) +
+  #     geom_line(size=1.2) +
+  #     facet_wrap(~sector, scales="free_y") +
+  #     labs(
+  #       title=paste("Evolución por sexo —", 
+  #                  ifelse(is.null(input$prov1_des) || input$prov1_des == "", 
+  #                         input$ccaa_des, input$prov1_des)),
+  #       x=NULL, y="Total"
+  #     ) +
+  #     theme_minimal(base_size = 14)
+  # })
+
+  # output$plot_des_edad <- renderPlot({
+  #   req("Edad" %in% input$grupo_des)
+    
+  #   df <- datos_desigualdad() %>%
+  #     filter(!edad %in% c("Total")) %>%
+  #     group_by(fecha, edad, sector) %>%
+  #     summarise(valor = sum(valor, na.rm=TRUE), .groups="drop")
+    
+  #   ggplot(df, aes(x=fecha, y=valor, color=edad)) +
+  #     geom_line(size=1.2) +
+  #     facet_wrap(~sector, scales="free_y") +
+  #     labs(
+  #       title=paste("Evolución por edad —", 
+  #                  ifelse(is.null(input$prov1_des) || input$prov1_des == "", 
+  #                         input$ccaa_des, input$prov1_des)),
+  #       x=NULL, y="Total"
+  #     ) +
+  #     theme_minimal(base_size = 14)
+  # })
+
+  # output$plot_des_comp <- renderPlot({
+  #   df <- datos_desigualdad() %>%
+  #     group_by(fecha, edad) %>%
+  #     summarise(valor=sum(valor, na.rm=TRUE), .groups="drop") %>%
+  #     group_by(fecha) %>%
+  #     mutate(porcentaje = valor / sum(valor) * 100)
+    
+  #   ggplot(df, aes(x=fecha, y=porcentaje, fill=edad)) +
+  #     geom_area() +
+  #     labs(
+  #       title=paste("Composición porcentual por edad —", 
+  #                  ifelse(is.null(input$prov1_des) || input$prov1_des == "", 
+  #                         input$ccaa_des, input$prov1_des)),
+  #       x=NULL, y="%"
+  #     ) +
+  #     theme_minimal(base_size = 14)
+  # })
 
 }
+
+
 
 ###################################################################
 ### LANZAMIENTO DE LA APP ######
 ###################################################################
 
 shinyApp(ui = ui, server = server)
+
+
+
+
+
+
+
