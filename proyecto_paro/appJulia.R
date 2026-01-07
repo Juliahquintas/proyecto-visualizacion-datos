@@ -588,8 +588,8 @@ server <- function(input, output, session) {
     if (input$granularidad == "anual") {
       df_agrupado <- df_filt %>%
         group_by(anio, Provincia, sector, metrica) %>%
-        summarise(valor = if(input$metrica_sel == "contratos") sum(valor, na.rm=TRUE) else mean(valor, na.rm=TRUE), 
-                 .groups = "drop")
+        summarise(valor = if(input$metrica_sel == "contratos") sum(valor, na.rm=TRUE) else mean(valor, na.rm=TRUE), .groups = "drop")
+      df_agrupado$fecha <- as.Date(paste0(df_agrupado$anio, "-01-01"))
     } else {
       df_agrupado <- df_filt 
     }
