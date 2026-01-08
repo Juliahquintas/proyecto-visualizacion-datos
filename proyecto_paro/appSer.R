@@ -7,6 +7,8 @@ library(scales)
 library(leaflet)
 library(sf)
 library(mapSpain)
+library(DT)
+library(plotly)
 
 # --- Configuración Inicial ---
 anios <- 2010:2025
@@ -21,6 +23,20 @@ source("preprocessing.R")
 res <- descargar_datasets_sepe(anios = anios, dir_data = "data")
 # Descargamos población (fundamental para el nuevo cálculo del mapa)
 res <- descargar_y_procesar_poblacion(codigos_ine = 2854:2908, dir_data = "data", anio_min = 2010, anio_max = 2025)
+
+# --- Mapeo Provincia -> CCAA (para agregación) ---
+ruta_csv_provincias <- "mapData/PROVINCIAS.csv"
+
+mapeo_provincias <- readr::read_delim(
+  ruta_csv_provincias,
+  delim = ";",
+  col_types = readr::cols(.default = "c"),
+  locale = readr::locale(encoding = "WINDOWS-1252")
+) %>%
+  dplyr::transmute(
+    cod_prov = as.integer(COD_PROV),
+    CCAA = COMUNIDAD_AUTONOMA
+  )
 
 # Función de lectura ROBUSTA (Latin1)
 leer_sepe_csv <- function(ruta) {
@@ -93,7 +109,26 @@ ui <- fluidPage(
         
         helpText("Nota: El valor relativo (%) se calcula sobre la POBLACIÓN TOTAL de la provincia.")
       ),
-      
+
+      conditionalPanel(
+        condition = "input.tabs_main == 'tab_ccaa'",
+        h4("Filtros CCAA vs España"),
+
+        selectInput("ccaa_p1", "CCAA:", choices = NULL),
+
+        radioButtons("modo_p1", "Mostrar:",
+          choices = c("Valores agregados" = "abs",
+                      "Variación interanual (%)" = "yoy",
+                      "Divergencia vs España" = "div"),
+          selected = "yoy"
+        ),
+
+        sliderInput("rango_anios_p1", "Rango de años:",
+          min = min(anios), max = max(anios),
+          value = c(min(anios), max(anios)),
+          step = 1, sep = ""
+        )
+      ),
       width = 3
     ),
     
@@ -110,7 +145,14 @@ ui <- fluidPage(
                  br(),
                  h3(textOutput("titulo_mapa")),
                  leafletOutput("mapa_leaflet", height = "650px")
-        )
+        ),
+        tabPanel("CCAA vs España", value = "tab_ccaa",
+                  br(),
+                  plotlyOutput("plot_ccaa_p1", height = "520px"),
+                  br(),
+                  h4("CCAA que más divergen de España (por año)"),
+                  DTOutput("tabla_top_div_p1")
+                )
       ),
       br(),
       verbatimTextOutput("debug_info"),
@@ -229,6 +271,87 @@ server <- function(input, output, session) {
     }
     res %>% arrange(fecha)
   })
+
+  # --- A) Agregación CCAA (desde provincial) ---
+  datos_ccaa <- reactive({
+    df <- datos_base()
+    req(df)
+
+    df %>%
+      left_join(mapeo_provincias, by = "cod_prov") %>%
+      filter(!is.na(CCAA)) %>%
+      group_by(fecha, anio, mes, metrica, CCAA) %>%
+      summarise(valor = sum(valor, na.rm = TRUE), .groups = "drop")
+  })
+
+  # --- B) España (agregado nacional) ---
+  datos_espana <- reactive({
+    df <- datos_ccaa()
+    req(df)
+
+    df %>%
+      group_by(fecha, anio, mes, metrica) %>%
+      summarise(valor = sum(valor, na.rm = TRUE), .groups = "drop") %>%
+      mutate(CCAA = "España")
+  })
+
+  # --- C) Cálculo de variación (YoY) y divergencia vs España ---
+  divergencia_ccaa <- reactive({
+    df_ccaa <- datos_ccaa()
+    df_es <- datos_espana()
+    req(df_ccaa, df_es)
+
+    # Nos quedamos con serie ANUAL (más limpia para “tendencia”)
+    dfA <- df_ccaa %>%
+      group_by(anio, metrica, CCAA) %>%
+      summarise(valor = sum(valor, na.rm=TRUE), .groups="drop") %>%
+      arrange(CCAA, metrica, anio) %>%
+      group_by(CCAA, metrica) %>%
+      mutate(yoy = (valor / dplyr::lag(valor) - 1) * 100) %>%
+      ungroup()
+
+    esA <- df_es %>%
+      group_by(anio, metrica) %>%
+      summarise(valor_es = sum(valor, na.rm=TRUE), .groups="drop") %>%
+      arrange(metrica, anio) %>%
+      group_by(metrica) %>%
+      mutate(yoy_es = (valor_es / dplyr::lag(valor_es) - 1) * 100) %>%
+      ungroup()
+
+    dfA %>%
+      left_join(esA, by = c("anio","metrica")) %>%
+      mutate(divergencia = yoy - yoy_es)  # + => crece más rápido / cae menos que España
+  })
+
+  ccaa_seleccionadas_tabla <- reactive({
+  df <- tabla_div_p1_data()
+  sel <- input$tabla_top_div_p1_rows_selected
+
+  if (is.null(sel) || length(sel) == 0) return(character(0))
+
+  unique(df$CCAA[sel])
+})
+
+
+tabla_div_p1_data <- reactive({
+  req(input$metrica_sel, input$rango_anios_p1)
+
+  divergencia_ccaa() %>%
+    filter(metrica == input$metrica_sel) %>%
+    filter(anio >= input$rango_anios_p1[1], anio <= input$rango_anios_p1[2]) %>%
+    filter(!is.na(divergencia)) %>%
+    mutate(abs_div = abs(divergencia)) %>%
+    group_by(anio) %>%
+    slice_max(order_by = abs_div, n = 5, with_ties = FALSE) %>%
+    ungroup() %>%
+    transmute(
+      Año = anio,
+      CCAA = CCAA,
+      `Divergencia` = round(divergencia, 2)
+    ) %>%
+    arrange(Año, desc(abs(`Divergencia`)))
+})
+
 
   # --- Updates de UI ---
   observe({
@@ -495,6 +618,127 @@ server <- function(input, output, session) {
        return(paste("Registros Mapa:", nrow(df), "| Temporal:", input$tiempo_mapa_sel))
     }
   })
+
+  # Rellenar selector CCAA
+observe({
+  df <- datos_ccaa()
+  req(df)
+  ccaa_list <- sort(unique(df$CCAA))
+  updateSelectInput(session, "ccaa_p1", choices = ccaa_list, selected = ccaa_list[1])
+})
+
+output$plot_ccaa_p1 <- plotly::renderPlotly({
+  req(input$metrica_sel, input$rango_anios_p1)
+  
+  ccaa_sel <- ccaa_seleccionadas_tabla()
+  if (length(ccaa_sel) == 0) {
+    req(input$ccaa_p1)
+    ccaa_sel <- input$ccaa_p1
+  }
+  
+  # Datos anuales CCAA
+  df_ccaa <- datos_ccaa() %>%
+    filter(metrica == input$metrica_sel) %>%
+    group_by(anio, CCAA) %>%
+    summarise(valor = sum(valor, na.rm=TRUE), .groups="drop") %>%
+    arrange(CCAA, anio) %>%
+    group_by(CCAA) %>%
+    mutate(yoy = (valor / lag(valor) - 1) * 100) %>%
+    ungroup()
+  
+  # España anual
+  df_es <- datos_espana() %>%
+    filter(metrica == input$metrica_sel) %>%
+    group_by(anio) %>%
+    summarise(valor_es = sum(valor, na.rm=TRUE), .groups="drop") %>%
+    arrange(anio) %>%
+    mutate(yoy_es = (valor_es / lag(valor_es) - 1) * 100)
+  
+  df <- df_ccaa %>%
+    left_join(df_es, by="anio") %>%
+    mutate(div = yoy - yoy_es) %>%
+    filter(anio >= input$rango_anios_p1[1], anio <= input$rango_anios_p1[2]) %>%
+    filter(CCAA %in% ccaa_sel)
+  
+  df_spain <- df_es %>%
+    transmute(anio = anio, valor = valor_es, yoy = yoy_es, div = 0, CCAA = "España")
+  
+  y <- switch(input$modo_p1, abs = "valor", yoy = "yoy", div = "div")
+  
+  # Etiqueta/tooltip personalizada
+  df <- df %>%
+    mutate(texto = paste0(
+      "<b>", CCAA, "</b><br>",
+      "Año: ", anio, "<br>",
+      "Valor: ", round(.data[[y]], 2)
+    ))
+  
+  df_spain <- df_spain %>%
+    mutate(texto = paste0(
+      "<b>España</b><br>",
+      "Año: ", anio, "<br>",
+      "Valor: ", round(.data[[y]], 2)
+    ))
+  
+  # Quitamos NA (primer año suele tener YoY NA)
+  df <- df %>% filter(!is.na(.data[[y]]))
+  df_spain <- df_spain %>% filter(!is.na(.data[[y]]))
+  
+  p <- ggplot() +
+    # España
+    geom_line(
+      data = df_spain,
+      aes(x = anio, y = .data[[y]], group = CCAA, color = CCAA, text = texto),
+      linewidth = 0.6,
+      linetype = "dashed"
+    ) +
+    geom_point(
+      data = df_spain,
+      aes(x = anio, y = .data[[y]], color = CCAA, text = texto),
+      size = 1.3
+    ) +
+    # CCAA seleccionadas
+    geom_line(
+      data = df,
+      aes(x = anio, y = .data[[y]], group = CCAA, color = CCAA, text = texto),
+      linewidth = 0.4
+    ) +
+    geom_point(
+      data = df,
+      aes(x = anio, y = .data[[y]], color = CCAA, text = texto),
+      size = 1
+    ) +
+    theme_minimal(base_size = 14) +
+    labs(
+      x = NULL,
+      y = if (input$modo_p1=="abs") "Total anual"
+      else if (input$modo_p1=="yoy") "Variación (%)"
+      else "Divergencia vs España",
+      color = NULL
+    )
+  
+  plotly::ggplotly(p, tooltip = "text") %>%
+    plotly::layout(hovermode = "closest")
+
+})
+
+output$tabla_top_div_p1 <- DT::renderDT({
+  df <- tabla_div_p1_data()
+  req(df)
+
+  DT::datatable(
+    df,
+    rownames = FALSE,
+    selection = list(mode = "multiple", selected = c(1)),
+    options = list(
+      pageLength = 8,
+      scrollX = TRUE
+    )
+  )
+})
+
+
+
 }
 
 shinyApp(ui = ui, server = server)
