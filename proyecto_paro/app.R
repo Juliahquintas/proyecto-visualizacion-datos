@@ -165,7 +165,8 @@ ui <- fluidPage(
           min = min(anios),       
           max = max(anios),       
           value = max(anios),     
-          step = 1,               
+          step = 1,
+          sep = "",               
           animate = TRUE           
         ),
 
@@ -217,8 +218,6 @@ ui <- fluidPage(
         condition = "input.tabs_main == 'tab_ccaa'",
         h4("Filtros CCAA vs España"),
 
-        selectInput("ccaa_p1", "CCAA:", choices = NULL),
-
         radioButtons("modo_p1", "Mostrar:",
           choices = c("Valores agregados" = "abs",
                       "Variación interanual (%)" = "yoy",
@@ -241,14 +240,14 @@ ui <- fluidPage(
       tabsetPanel(id = "tabs_main",
 
         tabPanel(
-          "Evolución Temporal", value = "tab_grafico",
+          "Evolución Temporal Sectores", value = "tab_grafico",
           br(),
           h3(textOutput("titulo_grafico")),
           plotOutput("plot_sectores", height = "600px")
         ),
 
         tabPanel(
-          "Mapa Geográfico", value = "tab_mapa",
+          "Mapa Geográfico Sectores", value = "tab_mapa",
           br(),
           h3(textOutput("titulo_mapa")),
           leafletOutput("mapa_leaflet", height = "650px")
@@ -263,7 +262,7 @@ ui <- fluidPage(
         ),
 
         tabPanel(
-          "Comparativa entre CCAA y España", 
+          "Variaciones Regionales", 
           value = "tab_ccaa",
           br(),
           plotlyOutput("plot_ccaa_p1", height = "520px"),
@@ -1285,24 +1284,24 @@ output$plot_ccaa_p1 <- plotly::renderPlotly({
     # España
     geom_line(
       data = df_spain,
-      aes(x = anio, y = .data[[y]], group = CCAA, color = CCAA, text = texto),
+      aes(x = anio, y = .data[[y]], group = CCAA, color = CCAA),
       linewidth = 0.6,
       linetype = "dashed"
     ) +
     geom_point(
       data = df_spain,
-      aes(x = anio, y = .data[[y]], color = CCAA, text = texto),
+      aes(x = anio, y = .data[[y]], color = CCAA),
       size = 1.3
     ) +
     # CCAA seleccionadas
     geom_line(
       data = df,
-      aes(x = anio, y = .data[[y]], group = CCAA, color = CCAA, text = texto),
+      aes(x = anio, y = .data[[y]], group = CCAA, color = CCAA),
       linewidth = 0.4
     ) +
     geom_point(
       data = df,
-      aes(x = anio, y = .data[[y]], color = CCAA, text = texto),
+      aes(x = anio, y = .data[[y]], color = CCAA),
       size = 1
     ) +
     theme_minimal(base_size = 14) +
