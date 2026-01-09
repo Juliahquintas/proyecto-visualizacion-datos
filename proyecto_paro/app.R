@@ -1258,7 +1258,9 @@ output$plot_ccaa_p1 <- plotly::renderPlotly({
     filter(CCAA %in% ccaa_sel)
   
   df_spain <- df_es %>%
-    transmute(anio = anio, valor = valor_es, yoy = yoy_es, div = 0, CCAA = "España")
+    transmute(anio = anio, valor = valor_es, yoy = yoy_es, div = 0, CCAA = "España") %>%
+    filter(anio >= input$rango_anios_p1[1], anio <= input$rango_anios_p1[2]) %>%
+    arrange(anio)
   
   y <- switch(input$modo_p1, abs = "valor", yoy = "yoy", div = "div")
   
